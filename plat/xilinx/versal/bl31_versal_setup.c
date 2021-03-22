@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, ARM Limited and Contributors. All rights reserved.
+ * Copyright (c) 2018-2020, ARM Limited and Contributors. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -13,8 +13,8 @@
 #include <common/debug.h>
 #include <drivers/arm/pl011.h>
 #include <drivers/console.h>
-#include <lib/xlat_tables/xlat_tables.h>
 #include <lib/mmio.h>
+#include <lib/xlat_tables/xlat_tables.h>
 #include <plat/common/platform.h>
 #include <versal_def.h>
 #include <plat_private.h>
@@ -23,7 +23,7 @@
 static entry_point_info_t bl32_image_ep_info;
 static entry_point_info_t bl33_image_ep_info;
 #if !VERSAL_CONSOLE_IS(dcc)
-static console_pl011_t versal_runtime_console;
+static console_t versal_runtime_console;
 #else
 #include <drivers/arm/dcc.h>
 #endif
@@ -74,7 +74,7 @@ void bl31_early_platform_setup2(u_register_t arg0, u_register_t arg1,
 					&versal_runtime_console);
 	if (rc == 0)
 		panic();
-	console_set_scope(&versal_runtime_console.console, CONSOLE_FLAG_BOOT |
+	console_set_scope(&versal_runtime_console, CONSOLE_FLAG_BOOT |
 			  CONSOLE_FLAG_RUNTIME);
 #else
 	/* Initialize the dcc console for debug */
@@ -105,10 +105,11 @@ void bl31_early_platform_setup2(u_register_t arg0, u_register_t arg1,
 	enum fsbl_handoff ret = fsbl_atf_handover(&bl32_image_ep_info,
 						 &bl33_image_ep_info,
 						 atf_handoff_addr);
-	if (ret == FSBL_HANDOFF_NO_STRUCT || ret == FSBL_HANDOFF_INVAL_STRUCT)
+	if (ret == FSBL_HANDOFF_NO_STRUCT || ret == FSBL_HANDOFF_INVAL_STRUCT) {
 		bl31_set_default_config();
-	else if (ret != FSBL_HANDOFF_SUCCESS)
+	} else if (ret != FSBL_HANDOFF_SUCCESS) {
 		panic();
+	}
 
 	NOTICE("BL31: Secure code at 0x%lx\n", bl32_image_ep_info.pc);
 	NOTICE("BL31: Non secure code at 0x%lx\n", bl33_image_ep_info.pc);

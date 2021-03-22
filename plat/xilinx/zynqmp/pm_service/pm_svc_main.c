@@ -23,9 +23,14 @@
 #include <plat/common/platform.h>
 #endif
 
-#define PM_GET_CALLBACK_DATA    0xa01
-#define PM_SET_SUSPEND_MODE     0xa02
-#define PM_GET_TRUSTZONE_VERSION        0xa03
+#include <plat_private.h>
+#include "pm_api_sys.h"
+#include "pm_client.h"
+#include "pm_ipi.h"
+
+#define PM_GET_CALLBACK_DATA	0xa01
+#define PM_SET_SUSPEND_MODE	0xa02
+#define PM_GET_TRUSTZONE_VERSION	0xa03
 
 /* pm_up = !0 - UP, pm_up = 0 - DOWN */
 static int32_t pm_up = 0, ipi_irq_flag = 0;

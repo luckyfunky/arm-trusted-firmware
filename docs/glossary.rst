@@ -18,6 +18,9 @@ You can find additional definitions in the `Arm Glossary`_.
    API
       Application Programming Interface
 
+   AT
+      Address Translation
+
    BTI
       Branch Target Identification. An Armv8.5 extension providing additional
       control flow integrity around indirect branches and their targets.
@@ -42,14 +45,23 @@ You can find additional definitions in the `Arm Glossary`_.
    DT
       Device Tree
 
+   DTB
+      Device Tree Blob
+
    EL
       Exception Level
 
    EHF
       Exception Handling Framework
 
+   FCONF
+      Firmware Configuration Framework
+
    FDT
       Flattened Device Tree
+
+   FFA
+      Firmware Framework for A-class processors
 
    FIP
       Firmware Image Package
@@ -101,6 +113,9 @@ You can find additional definitions in the `Arm Glossary`_.
    PMF
       Performance Measurement Framework
 
+   PSA
+      Platform Security Architecture
+
    PSCI
       Power State Coordination Interface
 
@@ -142,9 +157,6 @@ You can find additional definitions in the `Arm Glossary`_.
 
    SP
       Secure Partition
-
-   SPCI
-      Secure Partition Client Interface
 
    SPD
       Secure Payload Dispatcher

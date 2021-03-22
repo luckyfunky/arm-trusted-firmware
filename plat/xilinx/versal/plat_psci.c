@@ -1,18 +1,18 @@
 /*
- * Copyright (c) 2018 - 2019, ARM Limited and Contributors. All rights reserved.
+ * Copyright (c) 2018-2019, ARM Limited and Contributors. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-
 #include <assert.h>
-#include <drivers/arm/gicv3.h>
 #include <plat_arm.h>
 #include <plat_private.h>
+#include <pm_common.h>
 #include <common/debug.h>
 #include <lib/mmio.h>
 #include <lib/psci/psci.h>
 #include <plat/common/platform.h>
+#include <plat/arm/common/plat_arm.h>
 
 #include "pm_api_sys.h"
 #include "pm_client.h"
@@ -82,7 +82,8 @@ static void versal_pwr_domain_suspend(const psci_power_state_t *target_state)
  *
  * @target_state	Targated state
  */
-static void versal_pwr_domain_suspend_finish(const psci_power_state_t *target_state)
+static void versal_pwr_domain_suspend_finish(
+					const psci_power_state_t *target_state)
 {
 	unsigned int cpu_id = plat_my_core_pos();
 	const struct pm_proc *proc = pm_get_proc(cpu_id);
@@ -213,8 +214,8 @@ static void versal_get_sys_suspend_power_state(psci_power_state_t *req_state)
 }
 
 static const struct plat_psci_ops versal_nopmc_psci_ops = {
-	.pwr_domain_off			= versal_pwr_domain_off,
 	.pwr_domain_on			= versal_pwr_domain_on,
+	.pwr_domain_off			= versal_pwr_domain_off,
 	.pwr_domain_on_finish		= versal_pwr_domain_on_finish,
 	.pwr_domain_suspend		= versal_pwr_domain_suspend,
 	.pwr_domain_suspend_finish	= versal_pwr_domain_suspend_finish,

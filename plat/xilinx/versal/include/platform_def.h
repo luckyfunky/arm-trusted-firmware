@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, ARM Limited and Contributors. All rights reserved.
+ * Copyright (c) 2018-2020, ARM Limited and Contributors. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -17,7 +17,7 @@
 /* Size of cacheable stacks */
 #define PLATFORM_STACK_SIZE	0x440
 
-#define PLATFORM_CORE_COUNT		2
+#define PLATFORM_CORE_COUNT		U(2)
 #define PLAT_MAX_PWR_LVL		1
 #define PLAT_MAX_RET_STATE		1
 #define PLAT_MAX_OFF_STATE		2
@@ -56,9 +56,9 @@
  * BL33 specific defines.
  ******************************************************************************/
 #ifndef PRELOADED_BL33_BASE
-# define PLAT_ARM_NS_IMAGE_BASE	0x8000000
+# define PLAT_ARM_NS_IMAGE_BASE		0x8000000
 #else
-# define PLAT_ARM_NS_IMAGE_BASE	PRELOADED_BL33_BASE
+# define PLAT_ARM_NS_IMAGE_BASE		PRELOADED_BL33_BASE
 #endif
 
 /*******************************************************************************

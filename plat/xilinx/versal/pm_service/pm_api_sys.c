@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Xilinx, Inc. All rights reserved.
+ * Copyright (c) 2019, Xilinx, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -9,9 +9,9 @@
  * IPI interrupts
  */
 
-#include <plat/common/platform.h>
 #include <pm_common.h>
 #include <pm_ipi.h>
+#include <plat/common/platform.h>
 #include "pm_api_sys.h"
 #include "pm_client.h"
 #include "pm_defs.h"
@@ -42,9 +42,9 @@ unsigned int pm_get_shutdown_scope(void)
 	pl[0] = (uint32_t)((uint32_t)((arg0) & 0xFF) | (mid << 8)); \
 }
 
-#define PM_PACK_PAYLOAD2(pl, mid, arg0, arg1) {	\
-	pl[1] = (uint32_t)(arg1);		\
-	PM_PACK_PAYLOAD1(pl, mid, arg0);		\
+#define PM_PACK_PAYLOAD2(pl, mid, arg0, arg1) {		\
+	pl[1] = (uint32_t)(arg1);			\
+	PM_PACK_PAYLOAD1(pl, mid, arg0);                \
 }
 
 #define PM_PACK_PAYLOAD3(pl, mid, arg0, arg1, arg2) {	\
@@ -53,12 +53,12 @@ unsigned int pm_get_shutdown_scope(void)
 }
 
 #define PM_PACK_PAYLOAD4(pl, mid, arg0, arg1, arg2, arg3) {	\
-	pl[3] = (uint32_t)(arg3);			\
+	pl[3] = (uint32_t)(arg3);				\
 	PM_PACK_PAYLOAD3(pl, mid, arg0, arg1, arg2);		\
 }
 
 #define PM_PACK_PAYLOAD5(pl, mid, arg0, arg1, arg2, arg3, arg4) {	\
-	pl[4] = (uint32_t)(arg4);				\
+	pl[4] = (uint32_t)(arg4);					\
 	PM_PACK_PAYLOAD4(pl, mid, arg0, arg1, arg2, arg3);		\
 }
 
@@ -389,8 +389,8 @@ enum pm_ret_status pm_pinctrl_set_function(uint32_t pin, uint32_t function)
 	uint32_t payload[PAYLOAD_ARG_CNT];
 
 	/* Send request to the PMC */
-	PM_PACK_PAYLOAD3(payload, LIBPM_MODULE_ID, PM_PINCTRL_SET_FUNCTION,
-			 pin, function);
+	PM_PACK_PAYLOAD3(payload, LIBPM_MODULE_ID, PM_PINCTRL_SET_FUNCTION, pin,
+			 function)
 
 	return pm_ipi_send_sync(primary_proc, payload, NULL, 0);
 }

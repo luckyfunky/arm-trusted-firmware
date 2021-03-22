@@ -41,7 +41,7 @@
 #define STM32MP_PRIMARY_CPU		U(0x0)
 #define STM32MP_SECONDARY_CPU		U(0x1)
 
-#define PLATFORM_CLUSTER_COUNT		ULL(1)
+#define PLATFORM_CLUSTER_COUNT		U(1)
 #define PLATFORM_CLUSTER0_CORE_COUNT	U(2)
 #define PLATFORM_CLUSTER1_CORE_COUNT	U(0)
 #define PLATFORM_CORE_COUNT		(PLATFORM_CLUSTER1_CORE_COUNT + \
@@ -51,6 +51,7 @@
 #define MAX_IO_DEVICES			U(4)
 #define MAX_IO_HANDLES			U(4)
 #define MAX_IO_BLOCK_DEVICES		U(1)
+#define MAX_IO_MTD_DEVICES		U(1)
 
 /*******************************************************************************
  * BL2 specific defines.
@@ -194,5 +195,12 @@
  * per-cpu data structure for the FVP port.
  ******************************************************************************/
 #define PLAT_PCPU_DATA_SIZE	2
+
+/*******************************************************************************
+ * Number of parallel entry slots in SMT SCMI server entry context. For this
+ * platform, SCMI server is reached through SMC only, hence the number of
+ * entry slots.
+ ******************************************************************************/
+#define PLAT_SMT_ENTRY_COUNT		PLATFORM_CORE_COUNT
 
 #endif /* PLATFORM_DEF_H */

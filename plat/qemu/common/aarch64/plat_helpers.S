@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016, ARM Limited and Contributors. All rights reserved.
+ * Copyright (c) 2015-2020, ARM Limited and Contributors. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -70,6 +70,12 @@ func plat_secondary_cold_boot_setup
 poll_mailbox:
 	ldr	x1, [x2, x0]
 	cbz	x1, 1f
+
+	/* Clear the mailbox again ready for next time. */
+	mov x1, #PLAT_QEMU_HOLD_STATE_WAIT
+	str x1, [x2, x0]
+
+	/* Jump to the provided entrypoint. */
 	mov_imm	x0, PLAT_QEMU_TRUSTED_MAILBOX_BASE
 	ldr	x1, [x0]
 	br	x1
@@ -115,10 +121,10 @@ func plat_crash_console_putc
 endfunc plat_crash_console_putc
 
 	/* ---------------------------------------------
-	 * int plat_crash_console_flush(int c)
+	 * void plat_crash_console_flush(int c)
 	 * Function to force a write of all buffered
 	 * data that hasn't been output.
-	 * Out : return -1 on error else return 0.
+	 * Out : void.
 	 * Clobber list : x0, x1
 	 * ---------------------------------------------
 	 */

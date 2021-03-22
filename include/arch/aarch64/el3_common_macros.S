@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019, ARM Limited and Contributors. All rights reserved.
+ * Copyright (c) 2015-2020, ARM Limited and Contributors. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -9,6 +9,8 @@
 
 #include <arch.h>
 #include <asm_macros.S>
+#include <context.h>
+#include <lib/xlat_tables/xlat_tables_defs.h>
 
 	/*
 	 * Helper macro to initialise EL3 registers we care about.
@@ -232,11 +234,18 @@
  *
  * _exception_vectors:
  *	Address of the exception vectors to program in the VBAR_EL3 register.
+ *
+ * _pie_fixup_size:
+ *	Size of memory region to fixup Global Descriptor Table (GDT).
+ *
+ *	A non-zero value is expected when firmware needs GDT to be fixed-up.
+ *
  * -----------------------------------------------------------------------------
  */
 	.macro el3_entrypoint_common					\
 		_init_sctlr, _warm_boot_mailbox, _secondary_cold_boot,	\
-		_init_memory, _init_c_runtime, _exception_vectors
+		_init_memory, _init_c_runtime, _exception_vectors,	\
+		_pie_fixup_size
 
 	.if \_init_sctlr
 		/* -------------------------------------------------------------
@@ -282,6 +291,26 @@
 
 	do_cold_boot:
 	.endif /* _warm_boot_mailbox */
+
+	.if \_pie_fixup_size
+#if ENABLE_PIE
+		/*
+		 * ------------------------------------------------------------
+		 * If PIE is enabled fixup the Global descriptor Table only
+		 * once during primary core cold boot path.
+		 *
+		 * Compile time base address, required for fixup, is calculated
+		 * using "pie_fixup" label present within first page.
+		 * ------------------------------------------------------------
+		 */
+	pie_fixup:
+		ldr	x0, =pie_fixup
+		and	x0, x0, #~(PAGE_SIZE_MASK)
+		mov_imm	x1, \_pie_fixup_size
+		add	x1, x1, x0
+		bl	fixup_gdt_reloc
+#endif /* ENABLE_PIE */
+	.endif /* _pie_fixup_size */
 
 	/* ---------------------------------------------------------------------
 	 * Set the exception vectors.
@@ -355,6 +384,14 @@
 		add	x1, x1, :lo12:__RW_END__
 		sub	x1, x1, x0
 		bl	inv_dcache_range
+#if defined(IMAGE_BL31) && SEPARATE_NOBITS_REGION
+		adrp	x0, __NOBITS_START__
+		add	x0, x0, :lo12:__NOBITS_START__
+		adrp	x1, __NOBITS_END__
+		add	x1, x1, :lo12:__NOBITS_END__
+		sub	x1, x1, x0
+		bl	inv_dcache_range
+#endif
 #endif
 		adrp	x0, __BSS_START__
 		add	x0, x0, :lo12:__BSS_START__
@@ -404,6 +441,44 @@
 	.if \_init_c_runtime
 	bl	update_stack_protector_canary
 	.endif /* _init_c_runtime */
+#endif
+	.endm
+
+	.macro	apply_at_speculative_wa
+#if ERRATA_SPECULATIVE_AT
+	/*
+	 * Explicitly save x30 so as to free up a register and to enable
+	 * branching and also, save x29 which will be used in the called
+	 * function
+	 */
+	stp	x29, x30, [sp, #CTX_GPREGS_OFFSET + CTX_GPREG_X29]
+	bl	save_and_update_ptw_el1_sys_regs
+	ldp	x29, x30, [sp, #CTX_GPREGS_OFFSET + CTX_GPREG_X29]
+#endif
+	.endm
+
+	.macro	restore_ptw_el1_sys_regs
+#if ERRATA_SPECULATIVE_AT
+	/* -----------------------------------------------------------
+	 * In case of ERRATA_SPECULATIVE_AT, must follow below order
+	 * to ensure that page table walk is not enabled until
+	 * restoration of all EL1 system registers. TCR_EL1 register
+	 * should be updated at the end which restores previous page
+	 * table walk setting of stage1 i.e.(TCR_EL1.EPDx) bits. ISB
+	 * ensures that CPU does below steps in order.
+	 *
+	 * 1. Ensure all other system registers are written before
+	 *    updating SCTLR_EL1 using ISB.
+	 * 2. Restore SCTLR_EL1 register.
+	 * 3. Ensure SCTLR_EL1 written successfully using ISB.
+	 * 4. Restore TCR_EL1 register.
+	 * -----------------------------------------------------------
+	 */
+	isb
+	ldp	x28, x29, [sp, #CTX_EL1_SYSREGS_OFFSET + CTX_SCTLR_EL1]
+	msr	sctlr_el1, x28
+	isb
+	msr	tcr_el1, x29
 #endif
 	.endm
 

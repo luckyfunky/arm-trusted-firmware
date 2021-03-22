@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 - 2019, Xilinx, Inc. All rights reserved.
+ * Copyright (c) 2019, Xilinx, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -8,16 +8,17 @@
  * APU specific definition of processors in the subsystem as well as functions
  * for getting information about and changing state of the APU.
  */
+
 #include <assert.h>
-#include <lib/bakery_lock.h>
-#include <drivers/arm/gic_common.h>
-#include <drivers/arm/gicv3.h>
-#include <lib/mmio.h>
 #include <plat_ipi.h>
-#include <plat/common/platform.h>
 #include <platform_def.h>
-#include <lib/utils.h>
 #include <versal_def.h>
+#include <lib/bakery_lock.h>
+#include <lib/mmio.h>
+#include <lib/utils.h>
+#include <drivers/arm/gicv3.h>
+#include <drivers/arm/gic_common.h>
+#include <plat/common/platform.h>
 #include "pm_api_sys.h"
 #include "pm_client.h"
 

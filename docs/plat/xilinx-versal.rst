@@ -41,10 +41,10 @@ Xilinx Versal platform specific build options
     -   `spp_itr6`	: SPP ITR6
     -   `emu_itr6`	: EMU ITR6
 
-# PLM->ATF Parameter Passing
+# PLM->TF-A Parameter Passing
 ------------------------------
-The PLM populates a data structure with image information for the ATF. The ATF
+The PLM populates a data structure with image information for the TF-A. The TF-A
 uses that data to hand off to the loaded images. The address of the handoff
 data structure is passed in the ```PMC_GLOBAL_GLOB_GEN_STORAGE4``` register.
-The register is free to be used by other software once the ATF is bringing up
+The register is free to be used by other software once the TF-A is bringing up
 further firmware images.

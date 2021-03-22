@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018, ARM Limited and Contributors. All rights reserved.
+ * Copyright (c) 2013-2020, ARM Limited and Contributors. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -1368,6 +1368,7 @@ void pm_query_data(enum pm_query_id qid, unsigned int arg1, unsigned int arg2,
 	case PM_QID_CLOCK_GET_MAX_DIVISOR:
 		data[0] = pm_clock_get_max_divisor(arg1, arg2, &data[1]);
 		break;
+
 	default:
 		data[0] = PM_RET_ERROR_ARGS;
 		WARN("Unimplemented query service call: 0x%x\n", qid);

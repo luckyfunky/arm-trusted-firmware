@@ -13,6 +13,9 @@
 #include <common/runtime_svc.h>
 #include <tools_share/uuid.h>
 
+#include "ipi_mailbox_svc.h"
+#include "pm_svc_main.h"
+
 /* SMC function IDs for SiP Service queries */
 #define VERSAL_SIP_SVC_CALL_COUNT	0x8200ff00
 #define VERSAL_SIP_SVC_UID		0x8200ff01

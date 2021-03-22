@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, ARM Limited and Contributors. All rights reserved.
+ * Copyright (c) 2017-2020, ARM Limited and Contributors. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -22,6 +22,19 @@
 #endif
 
 	.global neoverse_n1_errata_ic_trap_handler
+	.global is_scu_present_in_dsu
+
+/*
+ * Check DSU is configured with SCU and L3 unit
+ * 1-> SCU present
+ * 0-> SCU not present
+ */
+func is_scu_present_in_dsu
+	mrs	x0, CPUCFR_EL1
+	ubfx	x0, x0, #SCU_SHIFT, #1
+	eor	x0, x0, #1
+	ret
+endfunc is_scu_present_in_dsu
 
 /* --------------------------------------------------
  * Errata Workaround for Neoverse N1 Erratum 1043202.
@@ -375,6 +388,38 @@ func check_errata_1542419
 	b	cpu_rev_var_range
 endfunc check_errata_1542419
 
+	/* --------------------------------------------------
+	 * Errata Workaround for Neoverse N1 Errata #1868343.
+	 * This applies to revision <= r4p0 of Neoverse N1.
+	 * This workaround is the same as the workaround for
+	 * errata 1262606 and 1275112 but applies to a wider
+	 * revision range.
+	 * Inputs:
+	 * x0: variant[4:7] and revision[0:3] of current cpu.
+	 * Shall clobber: x0-x17
+	 * --------------------------------------------------
+	 */
+func errata_n1_1868343_wa
+	/*
+	 * Compare x0 against revision r4p0
+	 */
+	mov	x17, x30
+	bl	check_errata_1868343
+	cbz	x0, 1f
+	mrs	x1, NEOVERSE_N1_CPUACTLR_EL1
+	orr	x1, x1, NEOVERSE_N1_CPUACTLR_EL1_BIT_13
+	msr	NEOVERSE_N1_CPUACTLR_EL1, x1
+	isb
+1:
+	ret	x17
+endfunc errata_n1_1868343_wa
+
+func check_errata_1868343
+	/* Applies to everything <= r4p0 */
+	mov	x1, #0x40
+	b	cpu_rev_var_ls
+endfunc check_errata_1868343
+
 func neoverse_n1_reset_func
 	mov	x19, x30
 
@@ -449,6 +494,11 @@ func neoverse_n1_reset_func
 	bl	errata_n1_1542419_wa
 #endif
 
+#if ERRATA_N1_1868343
+	mov	x0, x18
+	bl	errata_n1_1868343_wa
+#endif
+
 #if ENABLE_AMU
 	/* Make sure accesses from EL0/EL1 and EL2 are not trapped to EL3 */
 	mrs	x0, actlr_el3
@@ -463,6 +513,13 @@ func neoverse_n1_reset_func
 	/* Enable group0 counters */
 	mov	x0, #NEOVERSE_N1_AMU_GROUP0_MASK
 	msr	CPUAMCNTENSET_EL0, x0
+#endif
+
+#if NEOVERSE_N1_EXTERNAL_LLC
+	/* Some system may have External LLC, core needs to be made aware */
+	mrs     x0, NEOVERSE_N1_CPUECTLR_EL1
+	orr     x0, x0, NEOVERSE_N1_CPUECTLR_EL1_EXTLLC_BIT
+	msr     NEOVERSE_N1_CPUECTLR_EL1, x0
 #endif
 
 #if ERRATA_DSU_936184
@@ -515,6 +572,7 @@ func neoverse_n1_errata_report
 	report_errata ERRATA_N1_1275112, neoverse_n1, 1275112
 	report_errata ERRATA_N1_1315703, neoverse_n1, 1315703
 	report_errata ERRATA_N1_1542419, neoverse_n1, 1542419
+	report_errata ERRATA_N1_1868343, neoverse_n1, 1868343
 	report_errata ERRATA_DSU_936184, neoverse_n1, dsu_936184
 
 	ldp	x8, x30, [sp], #16
@@ -553,7 +611,7 @@ func neoverse_n1_errata_ic_trap_handler
 	 */
 	esb
 #endif
-	eret
+	exception_return
 1:
 	ret
 endfunc neoverse_n1_errata_ic_trap_handler

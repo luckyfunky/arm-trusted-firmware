@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020, Xilinx, Inc. All rights reserved.
+ * Copyright (c) 2019-2020, Xilinx, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -11,15 +11,15 @@
 
 #include <errno.h>
 #include <plat_private.h>
-#include <common/runtime_svc.h>
 #include <stdbool.h>
+#include <common/runtime_svc.h>
 #include "pm_api_sys.h"
 #include "pm_client.h"
 #include "pm_ipi.h"
 
 
 /* pm_up = true - UP, pm_up = false - DOWN */
-static bool pm_up = false;
+static bool pm_up;
 
 /**
  * pm_setup() - PM service setup
@@ -102,16 +102,16 @@ uint64_t pm_smc_handler(uint32_t smc_fid, uint64_t x1, uint64_t x2, uint64_t x3,
 		ret = pm_abort_suspend(pm_arg[0]);
 		SMC_RET1(handle, (uint64_t)ret);
 
+	case PM_SYSTEM_SHUTDOWN:
+		ret = pm_system_shutdown(pm_arg[0], pm_arg[1]);
+		SMC_RET1(handle, (uint64_t)ret);
+
 	case PM_REQ_WAKEUP:
 		ret = pm_req_wakeup(pm_arg[0], pm_arg[1], pm_arg[2], pm_arg[3]);
 		SMC_RET1(handle, (uint64_t)ret);
 
 	case PM_SET_WAKEUP_SOURCE:
 		ret = pm_set_wakeup_source(pm_arg[0], pm_arg[1], pm_arg[2]);
-		SMC_RET1(handle, (uint64_t)ret);
-
-	case PM_SYSTEM_SHUTDOWN:
-		ret = pm_system_shutdown(pm_arg[0], pm_arg[1]);
 		SMC_RET1(handle, (uint64_t)ret);
 
 	case PM_REQUEST_DEVICE:

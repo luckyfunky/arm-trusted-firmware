@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Xilinx, Inc. All rights reserved.
+ * Copyright (c) 2019, Xilinx, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -8,15 +8,15 @@
  * Versal IPI agent registers access management
  */
 
-#include <lib/bakery_lock.h>
-#include <common/debug.h>
 #include <errno.h>
 #include <ipi.h>
-#include <lib/mmio.h>
 #include <plat_ipi.h>
 #include <plat_private.h>
-#include <common/runtime_svc.h>
 #include <string.h>
+#include <common/debug.h>
+#include <common/runtime_svc.h>
+#include <lib/bakery_lock.h>
+#include <lib/mmio.h>
 
 /* versal ipi configuration table */
 const static struct ipi_config versal_ipi_table[] = {

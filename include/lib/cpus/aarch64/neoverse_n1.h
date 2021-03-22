@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, ARM Limited and Contributors. All rights reserved.
+ * Copyright (c) 2017-2020, ARM Limited and Contributors. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -35,6 +35,7 @@
 
 #define NEOVERSE_N1_WS_THR_L2_MASK	(ULL(3) << 24)
 #define NEOVERSE_N1_CPUECTLR_EL1_MM_TLBPF_DIS_BIT	(ULL(1) << 51)
+#define NEOVERSE_N1_CPUECTLR_EL1_EXTLLC_BIT		(ULL(1) << 0)
 
 /*******************************************************************************
  * CPU Auxiliary Control register specific definitions.
@@ -62,5 +63,13 @@
 #define CPUPCR_EL3	S3_6_C15_C8_1
 #define CPUPOR_EL3	S3_6_C15_C8_2
 #define CPUPMR_EL3	S3_6_C15_C8_3
+
+/******************************************************************************
+ * CPU Configuration register definitions.
+ *****************************************************************************/
+#define CPUCFR_EL1	S3_0_C15_C0_0
+
+/* SCU bit of CPU Configuration Register, EL1 */
+#define SCU_SHIFT	U(2)
 
 #endif /* NEOVERSE_N1_H */

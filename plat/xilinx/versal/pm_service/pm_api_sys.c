@@ -538,6 +538,30 @@ enum pm_ret_status pm_feature_check(uint32_t api_id, unsigned int *version,
 }
 
 /**
+ * pm_load_pdi() - Load the PDI
+ *
+ * This function provides support to load PDI from linux
+ *
+ * src:        Source device of pdi(DDR, OCM, SD etc)
+ * address_low: lower 32-bit Linear memory space address
+ * address_high: higher 32-bit Linear memory space address
+ * @flag	0 - Call from secure source
+ *		1 - Call from non-secure source
+ *
+ * @return      Returns status, either success or error+reason
+ */
+enum pm_ret_status pm_load_pdi(uint32_t src, uint32_t address_low,
+			       uint32_t address_high, uint32_t flag)
+{
+	uint32_t payload[PAYLOAD_ARG_CNT];
+
+	/* Send request to the PMU */
+	PM_PACK_PAYLOAD4(payload, LOADER_MODULE_ID, flag, PM_LOAD_PDI, src,
+			 address_high, address_low);
+	return pm_ipi_send_sync(primary_proc, payload, NULL, 0);
+}
+
+/**
  * pm_register_notifier() - PM call to register a subsystem to be notified
  * 			    about the device event
  * @device_id	Device ID for the Node to which the event is related

@@ -51,6 +51,8 @@ enum pm_ret_status pm_query_data(uint32_t qid, uint32_t arg1, uint32_t arg2,
 unsigned int pm_get_shutdown_scope(void);
 enum pm_ret_status pm_feature_check(uint32_t api_id, unsigned int *version,
 				    uint32_t flag);
+enum pm_ret_status pm_load_pdi(uint32_t src, uint32_t address_low,
+			       uint32_t address_high, uint32_t flag);
 enum pm_ret_status pm_register_notifier(uint32_t device_id, uint32_t event,
 					uint32_t wake, uint32_t enable,
 					uint32_t flag);

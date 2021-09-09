@@ -281,6 +281,13 @@ static uintptr_t eemi_for_compatibility(uint32_t api_id, uint32_t *pm_arg,
 		SMC_RET1(handle, (uint64_t)ret | ((uint64_t)version << 32));
 	}
 
+	case PM_LOAD_PDI:
+	{
+		ret = pm_load_pdi(pm_arg[0], pm_arg[1], pm_arg[2],
+				  security_flag);
+		SMC_RET1(handle, (uint64_t)ret);
+	}
+
 	default:
 		return (uintptr_t)0;
 	}

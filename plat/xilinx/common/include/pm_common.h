@@ -12,8 +12,8 @@
 #ifndef PM_COMMON_H
 #define PM_COMMON_H
 
-#include <stdint.h>
 #include <plat_pm_common.h>
+#include <stdint.h>
 
 #if IPI_CRC_CHECK
 #define PAYLOAD_ARG_CNT         8U

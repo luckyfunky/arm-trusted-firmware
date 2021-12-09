@@ -4,19 +4,15 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-
 #include <arch_helpers.h>
-
 #include <lib/bakery_lock.h>
 #include <lib/mmio.h>
-
 #include <ipi.h>
 #include <plat_ipi.h>
 #include <plat_private.h>
 #include <plat/common/platform.h>
 
 #include "pm_ipi.h"
-
 
 #define ERROR_CODE_MASK		0xFFFFU
 

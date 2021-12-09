@@ -11,9 +11,9 @@
 #ifndef PM_API_CLOCK_H
 #define PM_API_CLOCK_H
 
+#include "pm_common.h"
 #include <lib/utils_def.h>
 
-#include "pm_common.h"
 
 #define CLK_NAME_LEN		U(15)
 #define MAX_PARENTS		U(100)

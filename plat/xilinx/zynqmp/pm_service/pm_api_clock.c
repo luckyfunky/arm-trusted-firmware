@@ -2443,8 +2443,6 @@ enum pm_ret_status pm_api_clock_get_num_clocks(unsigned int *nclocks)
  *
  * This function is used by master to get nmae of clock specified
  * by given clock ID.
- *
- * @return	Returns success. In case of error, name data is 0.
  */
 void pm_api_clock_get_name(unsigned int clock_id, char *name)
 {
@@ -2735,13 +2733,14 @@ static struct pm_pll pm_plls[] = {
  *
  * @return	Pointer to PLL structure if found, NULL otherwise
  */
-struct pm_pll *pm_clock_get_pll(enum clock_id clock_id)
+struct pm_pll* pm_clock_get_pll(enum clock_id clock_id)
 {
 	uint32_t i;
 
 	for (i = 0; i < ARRAY_SIZE(pm_plls); i++) {
-		if (pm_plls[i].cid == clock_id)
+		if (pm_plls[i].cid == clock_id) {
 			return &pm_plls[i];
+		}
 	}
 
 	return NULL;
@@ -2773,7 +2772,7 @@ enum pm_ret_status pm_clock_get_pll_node_id(enum clock_id clock_id,
  *
  * @return	Pointer to PLL structure if found, NULL otherwise
  */
-struct pm_pll *pm_clock_get_pll_by_related_clk(enum clock_id clock_id)
+struct pm_pll* pm_clock_get_pll_by_related_clk(enum clock_id clock_id)
 {
 	uint32_t i;
 

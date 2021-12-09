@@ -6,7 +6,6 @@
 
 #include <plat_private.h>
 #include <platform_def.h>
-
 #include <common/interrupt_props.h>
 #include <drivers/arm/gicv3.h>
 #include <lib/utils.h>

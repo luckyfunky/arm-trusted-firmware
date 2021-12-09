@@ -5,9 +5,9 @@
  */
 
 #include <plat_ipi.h>
-#include <versal_def.h>
 #include <plat_private.h>
 #include <common/debug.h>
+#include <versal_def.h>
 #include <drivers/generic_delay_timer.h>
 #include <lib/mmio.h>
 #include <lib/xlat_tables/xlat_tables.h>

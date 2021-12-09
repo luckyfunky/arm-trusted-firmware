@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+
+#include <plat_ipi.h>
 #include <stdbool.h>
 #include <string.h>
-
 #include <common/debug.h>
 #include <drivers/generic_delay_timer.h>
 #include <lib/mmio.h>
 #include <lib/xlat_tables/xlat_tables.h>
-#include <plat_ipi.h>
 #include <plat_private.h>
 #include <plat/common/platform.h>
 
@@ -362,7 +362,7 @@ void zynqmp_config_setup(void)
 
 	/* Configure counter frequency */
 	counter_freq = read_cntfrq_el0();
-	if (counter_freq == ZYNQMP_DEFAULT_COUNTER_FREQ) {
+	if (ZYNQMP_DEFAULT_COUNTER_FREQ == counter_freq) {
 		write_cntfrq_el0(plat_get_syscnt_freq2());
 	}
 

@@ -301,9 +301,8 @@ static enum pm_ret_status pm_ioctl_sd_set_tapdelay(enum pm_node_id nid,
 
 	if ((val & mask) == 0) {
 		ret = pm_ioctl_sd_dll_reset(nid, PM_DLL_RESET_ASSERT);
-		if (ret != PM_RET_SUCCESS) {
+		if (ret != PM_RET_SUCCESS)
 			return ret;
-		}
 	}
 
 	if (type == PM_TAPDELAY_INPUT) {
@@ -486,8 +485,7 @@ static enum pm_ret_status pm_ioctl_write_pggs(unsigned int index,
 	if (index >= PGGS_NUM_REGS)
 		return PM_RET_ERROR_ARGS;
 
-	return pm_mmio_write(PGGS_BASEADDR + (index << 2),
-			     0xFFFFFFFFU, value);
+	return pm_mmio_write(PGGS_BASEADDR + (index << 2), 0xFFFFFFFFU, value);
 }
 
 /**

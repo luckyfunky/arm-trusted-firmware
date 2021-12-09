@@ -9,6 +9,7 @@ PSCI_EXTENDED_STATE_ID := 1
 A53_DISABLE_NON_TEMPORAL_HINT := 0
 SEPARATE_CODE_AND_RODATA := 1
 ZYNQMP_WDT_RESTART := 0
+ZYNQMP_WARM_RESTART := 0
 IPI_CRC_CHECK := 0
 override RESET_TO_BL31 := 1
 override GICV2_G0_FOR_EL3 := 1
@@ -20,6 +21,10 @@ EL3_EXCEPTION_HANDLING := $(SDEI_SUPPORT)
 ENABLE_SVE_FOR_NS	:= 0
 
 WORKAROUND_CVE_2017_5715	:=	0
+
+ARM_XLAT_TABLES_LIB_V1		:=	1
+$(eval $(call assert_boolean,ARM_XLAT_TABLES_LIB_V1))
+$(eval $(call add_define,ARM_XLAT_TABLES_LIB_V1))
 
 ifdef ZYNQMP_ATF_MEM_BASE
     $(eval $(call add_define,ZYNQMP_ATF_MEM_BASE))
@@ -43,9 +48,12 @@ ifdef ZYNQMP_BL32_MEM_BASE
     $(eval $(call add_define,ZYNQMP_BL32_MEM_SIZE))
 endif
 
+ifeq ($(ZYNQMP_WARM_RESTART), 1)
+    ZYNQMP_WDT_RESTART = $(ZYNQMP_WARM_RESTART)
+endif
 
 ifdef ZYNQMP_WDT_RESTART
-$(eval $(call add_define,ZYNQMP_WDT_RESTART))
+    $(eval $(call add_define,ZYNQMP_WDT_RESTART))
 endif
 
 ifdef ZYNQMP_IPI_CRC_CHECK

@@ -10,6 +10,7 @@
 #include <plat/arm/common/smccc_def.h>
 #include <plat/common/common_def.h>
 
+#define MAX_INTR_EL3			2
 /* List all consoles */
 #define VERSAL_CONSOLE_ID_pl011	1
 #define VERSAL_CONSOLE_ID_pl011_0	1
@@ -21,6 +22,8 @@
 /* List all supported platforms */
 #define VERSAL_PLATFORM_ID_versal_virt	1
 #define VERSAL_PLATFORM_ID_silicon	4
+#define VERSAL_PLATFORM_ID_spp_itr6	2
+#define VERSAL_PLATFORM_ID_emu_itr6	3
 
 #define VERSAL_PLATFORM_IS(con)	(VERSAL_PLATFORM_ID_ ## con == VERSAL_PLATFORM)
 
@@ -92,6 +95,16 @@
 # define VERSAL_UART_CLOCK	100000000
 # define VERSAL_UART_BAUDRATE	115200
 # define VERSAL_CPU_CLOCK	100000000
+#elif VERSAL_PLATFORM_IS(spp_itr6)
+# define PLATFORM_NAME		"SPP ITR6"
+# define VERSAL_UART_CLOCK	25000000
+# define VERSAL_UART_BAUDRATE	115200
+# define VERSAL_CPU_CLOCK	2720000
+#elif VERSAL_PLATFORM_IS(emu_itr6)
+# define PLATFORM_NAME		"EMU ITR6"
+# define VERSAL_UART_CLOCK	212000
+# define VERSAL_UART_BAUDRATE	9600
+# define VERSAL_CPU_CLOCK	212000
 #endif
 
 /* Access control register defines */
@@ -140,5 +153,17 @@
 #define IPI4_TRIG_BIT		(1 << 5)
 #define IPI5_REG_BASE		0xFF380000
 #define IPI5_TRIG_BIT		(1 << 6)
+
+/*******************************************************************************
+ * interrupt handling related constants
+ ******************************************************************************/
+#define ARM_IRQ_SEC_SGI_0	8
+#define ARM_IRQ_SEC_SGI_1	9
+#define ARM_IRQ_SEC_SGI_2	10
+#define ARM_IRQ_SEC_SGI_3	11
+#define ARM_IRQ_SEC_SGI_4	12
+#define ARM_IRQ_SEC_SGI_5	13
+#define ARM_IRQ_SEC_SGI_6	14
+#define ARM_IRQ_SEC_SGI_7	15
 
 #endif /* VERSAL_DEF_H */

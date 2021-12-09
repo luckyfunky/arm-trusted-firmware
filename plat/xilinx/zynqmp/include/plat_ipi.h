@@ -9,8 +9,8 @@
 #ifndef PLAT_IPI_H
 #define PLAT_IPI_H
 
-#include <stdint.h>
 #include <ipi.h>
+#include <stdint.h>
 
 /*********************************************************************
  * IPI agent IDs macros

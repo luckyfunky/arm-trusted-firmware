@@ -10,7 +10,10 @@
  */
 
 #include <errno.h>
-
+#include <plat_private.h>
+#include "pm_api_sys.h"
+#include "pm_client.h"
+#include "pm_ipi.h"
 #include <common/runtime_svc.h>
 #if ZYNQMP_WDT_RESTART
 #include <arch_helpers.h>
@@ -30,13 +33,12 @@
 #define PM_GET_TRUSTZONE_VERSION	0xa03
 
 /* pm_up = !0 - UP, pm_up = 0 - DOWN */
-static int32_t pm_up, ipi_irq_flag;
+static int32_t pm_up = 0, ipi_irq_flag = 0;
 
 #if ZYNQMP_WDT_RESTART
 static spinlock_t inc_lock;
 static int active_cores = 0;
 #endif
-
 
 /**
  * pm_context - Structure which contains data for power management
@@ -106,7 +108,7 @@ static void trigger_wdt_restart(void)
  * action.
  */
 static uint64_t ttc_fiq_handler(uint32_t id, uint32_t flags, void *handle,
-                               void *cookie)
+				void *cookie)
 {
 	INFO("BL31: Got TTC FIQ\n");
 
@@ -139,7 +141,7 @@ static uint64_t ttc_fiq_handler(uint32_t id, uint32_t flags, void *handle,
  * running CPU calls system restart.
  */
 static uint64_t __unused __dead2 zynqmp_sgi7_irq(uint32_t id, uint32_t flags,
-                                                void *handle, void *cookie)
+						 void *handle, void *cookie)
 {
 	int i;
 	uint32_t value;
@@ -154,6 +156,8 @@ static uint64_t __unused __dead2 zynqmp_sgi7_irq(uint32_t id, uint32_t flags,
 		mmio_write_32(BASE_GICD_BASE + GICD_CPENDSGIR + 4 * i,
 				0xffffffff);
 	}
+
+	dsb();
 
 	spin_unlock(&inc_lock);
 
@@ -231,7 +235,7 @@ int pm_setup(void)
 	if (status >= 0) {
 		INFO("BL31: PM Service Init Complete: API v%d.%d\n",
 		     PM_VERSION_MAJOR, PM_VERSION_MINOR);
-		ret = 0;
+		     ret = 0;
 	} else {
 		INFO("BL31: PM Service Init Failed, Error Code %d!\n", status);
 		ret = status;

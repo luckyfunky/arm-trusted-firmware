@@ -95,7 +95,7 @@ enum pm_ret_status pm_handle_eemi_call(uint32_t flag, uint32_t x0, uint32_t x1,
 		module_id = LIBPM_MODULE_ID;
 
 	PM_PACK_PAYLOAD6(payload, module_id, flag, x0, x1, x2, x3, x4, x5);
-	return pm_ipi_send_sync(primary_proc, payload, (uint32_t *)result, 4);
+	return pm_ipi_send_sync(primary_proc, payload, (uint32_t *)result, 8);
 }
 
 /**
@@ -412,7 +412,12 @@ enum pm_ret_status pm_query_data(uint32_t qid, uint32_t arg1, uint32_t arg2,
 	ret = pm_feature_check(PM_QUERY_DATA, &version, flag);
 	if (PM_RET_SUCCESS == ret) {
 		fw_api_version = version & 0xFFFF ;
-		if ((2U == fw_api_version) &&
+		if ((3U == fw_api_version)) {
+			/* for version 3, QUERY_DATA is not supported in ATF and implementation
+			 * will be removed eventually.
+			 */
+			return PM_RET_ERROR_NOTSUPPORTED;
+		} else if ((2U == fw_api_version) &&
 		    ((XPM_QID_CLOCK_GET_NAME == qid) ||
 		     (XPM_QID_PINCTRL_GET_FUNCTION_NAME == qid))) {
 			ret = pm_ipi_send_sync(primary_proc, payload, data, 8);

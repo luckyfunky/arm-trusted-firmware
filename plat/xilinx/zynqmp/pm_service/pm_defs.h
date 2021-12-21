@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2021, ARM Limited and Contributors. All rights reserved.
+ * Copyright (c) 2013-2022, ARM Limited and Contributors. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -107,6 +107,7 @@ enum pm_api_id {
 	/* PM Register Access API */
 	PM_REGISTER_ACCESS,
 	PM_EFUSE_ACCESS,
+	PM_FEATURE_CHECK = 63,
 	PM_API_MAX
 };
 

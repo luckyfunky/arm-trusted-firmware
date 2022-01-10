@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <errno.h>
+
 #include <bl31/bl31.h>
 #include <common/bl_common.h>
 #include <common/debug.h>

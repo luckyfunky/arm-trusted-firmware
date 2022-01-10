@@ -12,7 +12,7 @@ enum fsbl_handoff {
 	FSBL_HANDOFF_SUCCESS = 0,
 	FSBL_HANDOFF_NO_STRUCT,
 	FSBL_HANDOFF_INVAL_STRUCT,
-	FSBL_HANDOFF_TOO_MANY_PARTS,
+	FSBL_HANDOFF_TOO_MANY_PARTS
 };
 
 enum fsbl_handoff fsbl_atf_handover(entry_point_info_t *bl32_image_ep_info,

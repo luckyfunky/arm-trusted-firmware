@@ -6,9 +6,6 @@
 
 /* Top level SMC handler for SiP calls. Dispatch PM calls to PM SMC handler. */
 
-
-#include "ipi_mailbox_svc.h"
-#include "pm_svc_main.h"
 #include <common/debug.h>
 #include <common/runtime_svc.h>
 #include <tools_share/uuid.h>

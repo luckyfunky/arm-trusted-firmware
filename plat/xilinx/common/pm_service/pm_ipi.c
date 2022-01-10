@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+
 #include <arch_helpers.h>
 #include <lib/bakery_lock.h>
 #include <lib/mmio.h>

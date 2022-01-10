@@ -2738,9 +2738,8 @@ struct pm_pll* pm_clock_get_pll(enum clock_id clock_id)
 	uint32_t i;
 
 	for (i = 0; i < ARRAY_SIZE(pm_plls); i++) {
-		if (pm_plls[i].cid == clock_id) {
+		if (pm_plls[i].cid == clock_id)
 			return &pm_plls[i];
-		}
 	}
 
 	return NULL;

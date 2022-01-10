@@ -199,8 +199,6 @@ enum pm_ret_status pm_set_wakeup_source(enum pm_node_id target,
 	return pm_ipi_send_sync(primary_proc, payload, NULL, 0);
 }
 
-
-
 /**
  * pm_system_shutdown() - PM call to request a system shutdown or restart
  * @type	Shutdown or restart? 0=shutdown, 1=restart, 2=setscope
@@ -1335,7 +1333,6 @@ void pm_query_data(enum pm_query_id qid, unsigned int arg1, unsigned int arg2,
 	case PM_QID_CLOCK_GET_MAX_DIVISOR:
 		data[0] = pm_clock_get_max_divisor(arg1, arg2, &data[1]);
 		break;
-
 	default:
 		data[0] = PM_RET_ERROR_ARGS;
 		WARN("Unimplemented query service call: 0x%x\n", qid);

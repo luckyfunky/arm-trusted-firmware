@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-
-#include <plat_ipi.h>
 #include <stdbool.h>
 #include <string.h>
+
 #include <common/debug.h>
 #include <drivers/generic_delay_timer.h>
 #include <lib/mmio.h>
 #include <lib/xlat_tables/xlat_tables.h>
+#include <plat_ipi.h>
 #include <plat_private.h>
 #include <plat/common/platform.h>
 

@@ -10,10 +10,7 @@
  */
 
 #include <errno.h>
-#include <plat_private.h>
-#include "pm_api_sys.h"
-#include "pm_client.h"
-#include "pm_ipi.h"
+
 #include <common/runtime_svc.h>
 #if ZYNQMP_WDT_RESTART
 #include <arch_helpers.h>

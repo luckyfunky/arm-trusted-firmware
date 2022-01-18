@@ -250,6 +250,19 @@ static uintptr_t eemi_for_compatibility(uint32_t api_id, uint32_t *pm_arg,
 
 	switch (api_id) {
 
+	case PM_QUERY_DATA:
+	{
+		uint32_t data[8] = { 0 };
+
+		ret = pm_query_data(pm_arg[0], pm_arg[1], pm_arg[2],
+				      pm_arg[3], data, security_flag);
+		if (ret == PM_RET_ERROR_NOTSUPPORTED)
+			return (uintptr_t)0;
+
+		SMC_RET2(handle, (uint64_t)ret  | ((uint64_t)data[0] << 32),
+				 (uint64_t)data[1] | ((uint64_t)data[2] << 32));
+
+	}
 	case PM_FEATURE_CHECK:
 	{
 		uint32_t version;

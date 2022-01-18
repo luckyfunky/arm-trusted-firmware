@@ -39,7 +39,8 @@
 
 /* PM API Versions */
 #define PM_API_BASE_VERSION		1U
-#define PM_API_VERSION_2		2U
+
+#define PM_API_QUERY_DATA_VERSION	2U
 
 /* PM API ids */
 #define PM_REGISTER_NOTIFIER		5U
@@ -50,6 +51,7 @@
 #define PM_REQ_WAKEUP			10U
 #define PM_SET_WAKEUP_SOURCE		11U
 #define PM_SYSTEM_SHUTDOWN		12U
+#define PM_QUERY_DATA			35U
 #define PM_FEATURE_CHECK		63U
 
 /* Loader API ids */

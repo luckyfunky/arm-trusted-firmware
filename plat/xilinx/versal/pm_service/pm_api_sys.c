@@ -300,53 +300,6 @@ enum pm_ret_status pm_system_shutdown(uint32_t type, uint32_t subtype,
 }
 
 /**
-* pm_query_data() -  PM API for querying firmware data
-* @qid	The type of data to query
-* @arg1	Argument 1 to requested query data call
-* @arg2	Argument 2 to requested query data call
-* @arg3	Argument 3 to requested query data call
-* @data	Returned output data
-* @flag 0 - Call from secure source
-*	1 - Call from non-secure source
-*
-* This function returns requested data.
-*/
-enum pm_ret_status pm_query_data(uint32_t qid, uint32_t arg1, uint32_t arg2,
-				 uint32_t arg3, uint32_t *data, uint32_t flag)
-{
-	uint32_t ret;
-	uint32_t version;
-	uint32_t payload[PAYLOAD_ARG_CNT];
-	uint32_t fw_api_version;
-
-	/* Send request to the PMC */
-	PM_PACK_PAYLOAD5(payload, LIBPM_MODULE_ID, flag, PM_QUERY_DATA, qid,
-			 arg1, arg2, arg3);
-
-	ret = pm_feature_check(PM_QUERY_DATA, &version, flag);
-	if (PM_RET_SUCCESS == ret) {
-		fw_api_version = version & 0xFFFF ;
-		if ((3U == fw_api_version)) {
-			/* for version 3, QUERY_DATA is not supported in ATF and implementation
-			 * will be removed eventually.
-			 */
-			return PM_RET_ERROR_NOTSUPPORTED;
-		} else if ((2U == fw_api_version) &&
-		    ((XPM_QID_CLOCK_GET_NAME == qid) ||
-		     (XPM_QID_PINCTRL_GET_FUNCTION_NAME == qid))) {
-			ret = pm_ipi_send_sync(primary_proc, payload, data, 8);
-			ret = data[0];
-			data[0] = data[1];
-			data[1] = data[2];
-			data[2] = data[3];
-		} else {
-			ret = pm_ipi_send_sync(primary_proc, payload, data, 4);
-		}
-	}
-	return ret;
-}
-
-/**
  * pm_set_wakeup_source() - PM call to specify the wakeup source while suspended
  * @target	Device id of the targeted PU or subsystem
  * @wkup_node	Device id of the wakeup peripheral
@@ -394,8 +347,7 @@ enum pm_ret_status pm_feature_check(uint32_t api_id, unsigned int *version,
 	switch (api_id) {
 	case PM_GET_CALLBACK_DATA:
 	case PM_GET_TRUSTZONE_VERSION:
-	case PM_QUERY_DATA:
-		*version = (PM_API_QUERY_DATA_VERSION << 16);
+		*version = (PM_API_VERSION_2 << 16);
 		break;
 	default:
 		*version = (PM_API_BASE_VERSION << 16);

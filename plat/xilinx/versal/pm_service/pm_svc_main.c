@@ -250,19 +250,6 @@ static uintptr_t eemi_for_compatibility(uint32_t api_id, uint32_t *pm_arg,
 
 	switch (api_id) {
 
-	case PM_QUERY_DATA:
-	{
-		uint32_t data[8] = { 0 };
-
-		ret = pm_query_data(pm_arg[0], pm_arg[1], pm_arg[2],
-				      pm_arg[3], data, security_flag);
-		if (ret == PM_RET_ERROR_NOTSUPPORTED)
-			return (uintptr_t)0;
-
-		SMC_RET2(handle, (uint64_t)ret  | ((uint64_t)data[0] << 32),
-				 (uint64_t)data[1] | ((uint64_t)data[2] << 32));
-
-	}
 	case PM_FEATURE_CHECK:
 	{
 		uint32_t version;
@@ -387,6 +374,22 @@ static uintptr_t eemi_handler(uint32_t api_id, uint32_t *pm_arg,
 	ret = pm_handle_eemi_call(security_flag, api_id, pm_arg[0], pm_arg[1],
 				  pm_arg[2], pm_arg[3], pm_arg[4],
 				  (uint64_t *)buf);
+
+	/*
+	 * Two IOCTLs, to get clock name and pinctrl name of pm_query_data API
+	 * receives 5 words of respoonse from firmware. Currently linux driver can
+	 * receive only 4 words from TF-A. So, this needs to be handled separately
+	 * than other eemi calls.
+	 */
+	if (api_id == PM_QUERY_DATA) {
+		if ((pm_arg[0] == XPM_QID_CLOCK_GET_NAME ||
+		    pm_arg[0] == XPM_QID_PINCTRL_GET_FUNCTION_NAME) &&
+		    ret == PM_RET_SUCCESS) {
+			SMC_RET2(handle, (uint64_t)buf[0] | ((uint64_t)buf[1] << 32),
+				(uint64_t)buf[2] | ((uint64_t)buf[3] << 32));
+		}
+	}
+
 	SMC_RET2(handle, (uint64_t)ret | ((uint64_t)buf[0] << 32),
 		 (uint64_t)buf[1] | ((uint64_t)buf[2] << 32));
 }

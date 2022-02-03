@@ -362,7 +362,7 @@ void zynqmp_config_setup(void)
 
 	/* Configure counter frequency */
 	counter_freq = read_cntfrq_el0();
-	if (ZYNQMP_DEFAULT_COUNTER_FREQ == counter_freq) {
+	if (counter_freq == ZYNQMP_DEFAULT_COUNTER_FREQ) {
 		write_cntfrq_el0(plat_get_syscnt_freq2());
 	}
 

@@ -229,7 +229,7 @@ int pm_setup(void)
 	if (status >= 0) {
 		INFO("BL31: PM Service Init Complete: API v%d.%d\n",
 		     PM_VERSION_MAJOR, PM_VERSION_MINOR);
-		     ret = 0;
+		ret = 0;
 	} else {
 		INFO("BL31: PM Service Init Failed, Error Code %d!\n", status);
 		ret = status;

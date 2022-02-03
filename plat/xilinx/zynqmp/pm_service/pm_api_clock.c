@@ -2733,7 +2733,7 @@ static struct pm_pll pm_plls[] = {
  *
  * @return	Pointer to PLL structure if found, NULL otherwise
  */
-struct pm_pll* pm_clock_get_pll(enum clock_id clock_id)
+struct pm_pll *pm_clock_get_pll(enum clock_id clock_id)
 {
 	uint32_t i;
 
@@ -2771,7 +2771,7 @@ enum pm_ret_status pm_clock_get_pll_node_id(enum clock_id clock_id,
  *
  * @return	Pointer to PLL structure if found, NULL otherwise
  */
-struct pm_pll* pm_clock_get_pll_by_related_clk(enum clock_id clock_id)
+struct pm_pll *pm_clock_get_pll_by_related_clk(enum clock_id clock_id)
 {
 	uint32_t i;
 

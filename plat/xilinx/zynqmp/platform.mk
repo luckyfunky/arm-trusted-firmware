@@ -9,7 +9,6 @@ PSCI_EXTENDED_STATE_ID := 1
 A53_DISABLE_NON_TEMPORAL_HINT := 0
 SEPARATE_CODE_AND_RODATA := 1
 ZYNQMP_WDT_RESTART := 0
-ZYNQMP_WARM_RESTART := 0
 IPI_CRC_CHECK := 0
 override RESET_TO_BL31 := 1
 override WARMBOOT_ENABLE_DCACHE_EARLY := 1
@@ -57,16 +56,13 @@ ifdef ZYNQMP_BL32_MEM_BASE
     $(eval $(call add_define,ZYNQMP_BL32_MEM_SIZE))
 endif
 
-ifeq ($(ZYNQMP_WARM_RESTART), 1)
-    ZYNQMP_WDT_RESTART = $(ZYNQMP_WARM_RESTART)
-endif
 
 ifdef ZYNQMP_WDT_RESTART
     $(eval $(call add_define,ZYNQMP_WDT_RESTART))
 endif
 
 ifdef ZYNQMP_IPI_CRC_CHECK
-  $(warning "ZYNQMP_IPI_CRC_CHECK macro is deprecated...instead please use IPI_CRC_CHECK.")
+    $(warning "ZYNQMP_IPI_CRC_CHECK macro is deprecated...instead please use IPI_CRC_CHECK.")
 endif
 
 ifdef IPI_CRC_CHECK

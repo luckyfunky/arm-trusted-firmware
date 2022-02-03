@@ -486,8 +486,8 @@ static enum pm_ret_status pm_ioctl_write_pggs(unsigned int index,
 	if (index >= PGGS_NUM_REGS)
 		return PM_RET_ERROR_ARGS;
 
-	return pm_mmio_write(PGGS_BASEADDR + (index << 2), 
-                             0xFFFFFFFFU, value);
+	return pm_mmio_write(PGGS_BASEADDR + (index << 2),
+			     0xFFFFFFFFU, value);
 }
 
 /**

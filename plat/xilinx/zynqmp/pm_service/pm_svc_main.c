@@ -27,7 +27,7 @@
 #include "pm_ipi.h"
 
 /* pm_up = !0 - UP, pm_up = 0 - DOWN */
-static int32_t pm_up = 0, ipi_irq_flag = 0;
+static int32_t pm_up, ipi_irq_flag;
 
 #if ZYNQMP_WDT_RESTART
 static spinlock_t inc_lock;

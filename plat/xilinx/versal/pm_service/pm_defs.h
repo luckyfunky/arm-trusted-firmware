@@ -164,13 +164,4 @@ enum pm_query_id {
 	XPM_QID_CLOCK_GET_MAX_DIVISOR,
 	XPM_QID_PLD_GET_PARENT,
 };
-
-/**
- * PM notify events
- */
-enum XPmNotifyEvent {
-	EVENT_STATE_CHANGE = 1,                         /**< State change event */
-	EVENT_ZERO_USERS = 2,                           /**< Zero user event */
-};
-
 #endif /* PM_DEFS_H */

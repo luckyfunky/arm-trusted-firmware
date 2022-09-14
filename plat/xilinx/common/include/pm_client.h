@@ -25,7 +25,6 @@ void pm_client_wakeup(const struct pm_proc *proc);
 extern const struct pm_proc *primary_proc;
 
 #if defined(PLAT_zynqmp)
-enum pm_ret_status set_ocm_retention(void);
 enum pm_ret_status pm_set_suspend_mode(uint32_t mode);
 const struct pm_proc *pm_get_proc_by_node(enum pm_node_id nid);
 #endif /* PLAT_zynqmp */

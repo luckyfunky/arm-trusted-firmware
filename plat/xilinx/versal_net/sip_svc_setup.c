@@ -1,16 +1,19 @@
 /*
  * Copyright (c) 2018-2019, ARM Limited and Contributors. All rights reserved.
- * Copyright (c) 2021-2022, Xilinx, Inc. All rights reserved.
+ * Copyright (c) 2018-2022, Xilinx, Inc. All rights reserved.
+ * Copyright (C) 2022, Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
 /* Top level SMC handler for SiP calls. Dispatch PM calls to PM SMC handler. */
 
+#include <errno.h>
+
 #include <common/debug.h>
 #include <common/runtime_svc.h>
-#include <errno.h>
 #include <tools_share/uuid.h>
+
 #include "ipi_mailbox_svc.h"
 #include "plat_private.h"
 #include "pm_svc_main.h"
@@ -21,8 +24,8 @@
 #define VERSAL_NET_SIP_SVC_VERSION	(0x8200ff03U)
 
 /* SiP Service Calls version numbers */
-#define SIP_SVC_VERSION_MAJOR	0
-#define SIP_SVC_VERSION_MINOR	1
+#define SIP_SVC_VERSION_MAJOR		(0U)
+#define SIP_SVC_VERSION_MINOR		(1U)
 
 /* These macros are used to identify PM calls from the SMC function ID */
 #define PM_FID_MASK	0xf000u

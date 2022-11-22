@@ -1,5 +1,6 @@
 #
 # Copyright (c) 2013-2021, ARM Limited and Contributors. All rights reserved.
+# Portions copyright (c) 2021-2022, ProvenRun S.A.S. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -67,6 +68,10 @@ endif
 
 ifdef IPI_CRC_CHECK
     $(eval $(call add_define,IPI_CRC_CHECK))
+endif
+
+ifdef ZYNQMP_SECURE_EFUSES
+    $(eval $(call add_define,ZYNQMP_SECURE_EFUSES))
 endif
 
 PLAT_INCLUDES		:=	-Iinclude/plat/arm/common/			\

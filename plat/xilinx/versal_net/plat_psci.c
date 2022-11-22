@@ -1,22 +1,26 @@
 /*
  * Copyright (c) 2018-2020, ARM Limited and Contributors. All rights reserved.
  * Copyright (c) 2021-2022, Xilinx, Inc. All rights reserved.
+ * Copyright (C) 2022, Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
 #include <assert.h>
-#include <plat_arm.h>
-#include <plat_private.h>
+
 #include <common/debug.h>
 #include <common/runtime_svc.h>
 #include <lib/mmio.h>
 #include <lib/psci/psci.h>
-#include <plat/common/platform.h>
 #include <plat/arm/common/plat_arm.h>
-#include "pm_defs.h"
+#include <plat/common/platform.h>
+#include <plat_arm.h>
 
-#define FUNCID_MASK	U(0xffff)
+#include <plat_private.h>
+
+#define PM_RET_ERROR_NOFEATURE U(19)
+
+#define PM_IOCTL	34U
 
 static uintptr_t versal_net_sec_entry;
 
@@ -64,7 +68,7 @@ static int32_t zynqmp_nopmu_pwr_domain_on(u_register_t mpidr)
 
 	/* program RVBAR */
 	mmio_write_32(apu_cluster_base + APU_RVBAR_L_0 + (cpu << 3),
-		      (unsigned int)versal_net_sec_entry);
+		      (uint32_t)versal_net_sec_entry);
 	mmio_write_32(apu_cluster_base + APU_RVBAR_H_0 + (cpu << 3),
 		      versal_net_sec_entry >> 32);
 
@@ -75,7 +79,8 @@ static int32_t zynqmp_nopmu_pwr_domain_on(u_register_t mpidr)
 	mmio_clrbits_32(rst_apu_cluster, RST_APU_CLUSTER_WARM_RESET);
 	mmio_clrbits_32(rst_apu_cluster, RST_APU_CLUSTER_COLD_RESET);
 
-	apu_pcli_base = APU_PCLI + (APU_PCLI_CPU_STEP * cpu) + (APU_PCLI_CLUSTER_CPU_STEP * cluster);
+	apu_pcli_base = APU_PCLI + (APU_PCLI_CPU_STEP * cpu) +
+			(APU_PCLI_CLUSTER_CPU_STEP * cluster);
 
 	mmio_write_32(apu_pcli_base + PCLI_PSTATE_OFFSET, PCLI_PSTATE_VAL_CLEAR);
 	mmio_write_32(apu_pcli_base + PCLI_PREQ_OFFSET, PREQ_CHANGE_REQUEST);
@@ -146,7 +151,8 @@ static const struct plat_psci_ops versal_net_nopmc_psci_ops = {
 /*******************************************************************************
  * Export the platform specific power ops.
  ******************************************************************************/
-int32_t plat_setup_psci_ops(uintptr_t sec_entrypoint, const struct plat_psci_ops **psci_ops)
+int32_t plat_setup_psci_ops(uintptr_t sec_entrypoint,
+			    const struct plat_psci_ops **psci_ops)
 {
 	versal_net_sec_entry = sec_entrypoint;
 
@@ -166,7 +172,7 @@ static int32_t no_pm_ioctl(uint32_t device_id, uint32_t ioctl_id,
 			   uint32_t arg1, uint32_t arg2)
 {
 	VERBOSE("%s: ioctl_id: %x, arg1: %x\n", __func__, ioctl_id, arg1);
-	if (ioctl_id == IOCTL_OSPI_MUX_SELECT ) {
+	if (ioctl_id == IOCTL_OSPI_MUX_SELECT) {
 		mmio_write_32(SLCR_OSPI_QSPI_IOU_AXI_MUX_SEL, arg1);
 		return 0;
 	}
@@ -187,7 +193,7 @@ static uint64_t no_pm_handler(uint32_t smc_fid, uint64_t x1, uint64_t x2, uint64
 	api_id = smc_fid & FUNCID_NUM_MASK;
 	VERBOSE("%s: smc_fid: %x, api_id=0x%x\n", __func__, smc_fid, api_id);
 
-	switch (smc_fid & FUNCID_MASK) {
+	switch (api_id) {
 	case PM_IOCTL:
 	{
 		ret = no_pm_ioctl(arg[0], arg[1], arg[2], arg[3]);
@@ -196,6 +202,7 @@ static uint64_t no_pm_handler(uint32_t smc_fid, uint64_t x1, uint64_t x2, uint64
 	case PM_GET_CHIPID:
 	{
 		uint32_t idcode, version;
+
 		idcode  = mmio_read_32(PMC_TAP);
 		version = mmio_read_32(PMC_TAP_VERSION);
 		SMC_RET2(handle, ((uint64_t)idcode << 32), version);

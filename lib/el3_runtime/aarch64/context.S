@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2021, ARM Limited and Contributors. All rights reserved.
+ * Copyright (c) 2013-2022, Arm Limited and Contributors. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -11,17 +11,61 @@
 #include <el3_common_macros.S>
 
 #if CTX_INCLUDE_EL2_REGS
-	.global	el2_sysregs_context_save
-	.global	el2_sysregs_context_restore
-#endif
+	.global	el2_sysregs_context_save_common
+	.global	el2_sysregs_context_restore_common
+#if ENABLE_SPE_FOR_LOWER_ELS
+	.global	el2_sysregs_context_save_spe
+	.global	el2_sysregs_context_restore_spe
+#endif /* ENABLE_SPE_FOR_LOWER_ELS */
+#if CTX_INCLUDE_MTE_REGS
+	.global	el2_sysregs_context_save_mte
+	.global	el2_sysregs_context_restore_mte
+#endif /* CTX_INCLUDE_MTE_REGS */
+#if ENABLE_MPAM_FOR_LOWER_ELS
+	.global	el2_sysregs_context_save_mpam
+	.global	el2_sysregs_context_restore_mpam
+#endif /* ENABLE_MPAM_FOR_LOWER_ELS */
+#if ENABLE_FEAT_FGT
+	.global	el2_sysregs_context_save_fgt
+	.global	el2_sysregs_context_restore_fgt
+#endif /* ENABLE_FEAT_FGT */
+#if ENABLE_FEAT_ECV
+	.global	el2_sysregs_context_save_ecv
+	.global	el2_sysregs_context_restore_ecv
+#endif /* ENABLE_FEAT_ECV */
+#if ENABLE_FEAT_VHE
+	.global	el2_sysregs_context_save_vhe
+	.global	el2_sysregs_context_restore_vhe
+#endif /* ENABLE_FEAT_VHE */
+#if RAS_EXTENSION
+	.global	el2_sysregs_context_save_ras
+	.global	el2_sysregs_context_restore_ras
+#endif /* RAS_EXTENSION */
+#if CTX_INCLUDE_NEVE_REGS
+	.global	el2_sysregs_context_save_nv2
+	.global	el2_sysregs_context_restore_nv2
+#endif /* CTX_INCLUDE_NEVE_REGS */
+#if ENABLE_TRF_FOR_NS
+	.global	el2_sysregs_context_save_trf
+	.global	el2_sysregs_context_restore_trf
+#endif /* ENABLE_TRF_FOR_NS */
+#if ENABLE_FEAT_CSV2_2
+	.global	el2_sysregs_context_save_csv2
+	.global	el2_sysregs_context_restore_csv2
+#endif /* ENABLE_FEAT_CSV2_2 */
+#if ENABLE_FEAT_HCX
+	.global	el2_sysregs_context_save_hcx
+	.global	el2_sysregs_context_restore_hcx
+#endif /* ENABLE_FEAT_HCX */
+#endif /* CTX_INCLUDE_EL2_REGS */
 
 	.global	el1_sysregs_context_save
 	.global	el1_sysregs_context_restore
 #if CTX_INCLUDE_FPREGS
 	.global	fpregs_context_save
 	.global	fpregs_context_restore
-#endif
-	.global	save_gp_pmcr_pauth_regs
+#endif /* CTX_INCLUDE_FPREGS */
+	.global	prepare_el3_entry
 	.global	restore_gp_pmcr_pauth_regs
 	.global save_and_update_ptw_el1_sys_regs
 	.global	el3_exit
@@ -29,11 +73,16 @@
 #if CTX_INCLUDE_EL2_REGS
 
 /* -----------------------------------------------------
- * The following function strictly follows the AArch64
+ * The following functions strictly follow the AArch64
  * PCS to use x9-x16 (temporary caller-saved registers)
- * to save EL2 system register context. It assumes that
- * 'x0' is pointing to a 'el2_sys_regs' structure where
- * the register context will be saved.
+ * to save/restore EL2 system register context.
+ * el2_sysregs_context_save/restore_common functions
+ * save and restore registers that are common to all
+ * configurations. The rest of the functions save and
+ * restore EL2 system registers that are present when a
+ * particular feature is enabled. All functions assume
+ * that 'x0' is pointing to a 'el2_sys_regs' structure
+ * where the register context will be saved/restored.
  *
  * The following registers are not added.
  * AMEVCNTVOFF0<n>_EL2
@@ -43,7 +92,7 @@
  * ICH_LR<n>_EL2
  * -----------------------------------------------------
  */
-func el2_sysregs_context_save
+func el2_sysregs_context_save_common
 	mrs	x9, actlr_el2
 	mrs	x10, afsr0_el2
 	stp	x9, x10, [x0, #CTX_ACTLR_EL2]
@@ -62,7 +111,7 @@ func el2_sysregs_context_save
 #if CTX_INCLUDE_AARCH32_REGS
 	mrs	x16, dbgvcr32_el2
 	str	x16, [x0, #CTX_DBGVCR32_EL2]
-#endif
+#endif /* CTX_INCLUDE_AARCH32_REGS */
 
 	mrs	x9, elr_el2
 	mrs	x10, esr_el2
@@ -88,10 +137,6 @@ func el2_sysregs_context_save
 	mrs	x12, mdcr_el2
 	stp	x11, x12, [x0, #CTX_MAIR_EL2]
 
-#if ENABLE_SPE_FOR_LOWER_ELS
-	mrs	x13, PMSCR_EL2
-	str	x13, [x0, #CTX_PMSCR_EL2]
-#endif
 	mrs	x14, sctlr_el2
 	str	x14, [x0, #CTX_SCTLR_EL2]
 
@@ -114,110 +159,10 @@ func el2_sysregs_context_save
 	mrs	x15, vtcr_el2
 	mrs	x16, vttbr_el2
 	stp	x15, x16, [x0, #CTX_VTCR_EL2]
-
-#if CTX_INCLUDE_MTE_REGS
-	mrs	x9, TFSR_EL2
-	str	x9, [x0, #CTX_TFSR_EL2]
-#endif
-
-#if ENABLE_MPAM_FOR_LOWER_ELS
-	mrs	x10, MPAM2_EL2
-	str	x10, [x0, #CTX_MPAM2_EL2]
-
-	mrs	x11, MPAMHCR_EL2
-	mrs	x12, MPAMVPM0_EL2
-	stp	x11, x12, [x0, #CTX_MPAMHCR_EL2]
-
-	mrs	x13, MPAMVPM1_EL2
-	mrs	x14, MPAMVPM2_EL2
-	stp	x13, x14, [x0, #CTX_MPAMVPM1_EL2]
-
-	mrs	x15, MPAMVPM3_EL2
-	mrs	x16, MPAMVPM4_EL2
-	stp	x15, x16, [x0, #CTX_MPAMVPM3_EL2]
-
-	mrs	x9, MPAMVPM5_EL2
-	mrs	x10, MPAMVPM6_EL2
-	stp	x9, x10, [x0, #CTX_MPAMVPM5_EL2]
-
-	mrs	x11, MPAMVPM7_EL2
-	mrs	x12, MPAMVPMV_EL2
-	stp	x11, x12, [x0, #CTX_MPAMVPM7_EL2]
-#endif
-
-#if ARM_ARCH_AT_LEAST(8, 6)
-	mrs	x13, HAFGRTR_EL2
-	mrs	x14, HDFGRTR_EL2
-	stp	x13, x14, [x0, #CTX_HAFGRTR_EL2]
-
-	mrs	x15, HDFGWTR_EL2
-	mrs	x16, HFGITR_EL2
-	stp	x15, x16, [x0, #CTX_HDFGWTR_EL2]
-
-	mrs	x9, HFGRTR_EL2
-	mrs	x10, HFGWTR_EL2
-	stp	x9, x10, [x0, #CTX_HFGRTR_EL2]
-
-	mrs	x11, CNTPOFF_EL2
-	str	x11, [x0, #CTX_CNTPOFF_EL2]
-#endif
-
-#if ARM_ARCH_AT_LEAST(8, 4)
-	mrs	x12, contextidr_el2
-	str	x12, [x0, #CTX_CONTEXTIDR_EL2]
-
-#if CTX_INCLUDE_AARCH32_REGS
-	mrs	x13, sder32_el2
-	str	x13, [x0, #CTX_SDER32_EL2]
-#endif
-	mrs	x14, ttbr1_el2
-	mrs	x15, vdisr_el2
-	stp	x14, x15, [x0, #CTX_TTBR1_EL2]
-
-#if CTX_INCLUDE_NEVE_REGS
-	mrs	x16, vncr_el2
-	str	x16, [x0, #CTX_VNCR_EL2]
-#endif
-
-	mrs	x9, vsesr_el2
-	mrs	x10, vstcr_el2
-	stp	x9, x10, [x0, #CTX_VSESR_EL2]
-
-	mrs	x11, vsttbr_el2
-	mrs	x12, TRFCR_EL2
-	stp	x11, x12, [x0, #CTX_VSTTBR_EL2]
-#endif
-
-#if ARM_ARCH_AT_LEAST(8, 5)
-	mrs	x13, scxtnum_el2
-	str	x13, [x0, #CTX_SCXTNUM_EL2]
-#endif
-
-#if ENABLE_FEAT_HCX
-	mrs	x14, hcrx_el2
-	str	x14, [x0, #CTX_HCRX_EL2]
-#endif
-
 	ret
-endfunc el2_sysregs_context_save
+endfunc el2_sysregs_context_save_common
 
-
-/* -----------------------------------------------------
- * The following function strictly follows the AArch64
- * PCS to use x9-x16 (temporary caller-saved registers)
- * to restore EL2 system register context.  It assumes
- * that 'x0' is pointing to a 'el2_sys_regs' structure
- * from where the register context will be restored
-
- * The following registers are not restored
- * AMEVCNTVOFF0<n>_EL2
- * AMEVCNTVOFF1<n>_EL2
- * ICH_AP0R<n>_EL2
- * ICH_AP1R<n>_EL2
- * ICH_LR<n>_EL2
- * -----------------------------------------------------
- */
-func el2_sysregs_context_restore
+func el2_sysregs_context_restore_common
 	ldp	x9, x10, [x0, #CTX_ACTLR_EL2]
 	msr	actlr_el2, x9
 	msr	afsr0_el2, x10
@@ -236,7 +181,7 @@ func el2_sysregs_context_restore
 #if CTX_INCLUDE_AARCH32_REGS
 	ldr	x16, [x0, #CTX_DBGVCR32_EL2]
 	msr	dbgvcr32_el2, x16
-#endif
+#endif /* CTX_INCLUDE_AARCH32_REGS */
 
 	ldp	x9, x10, [x0, #CTX_ELR_EL2]
 	msr	elr_el2, x9
@@ -262,10 +207,6 @@ func el2_sysregs_context_restore
 	msr	mair_el2, x11
 	msr	mdcr_el2, x12
 
-#if ENABLE_SPE_FOR_LOWER_ELS
-	ldr	x13, [x0, #CTX_PMSCR_EL2]
-	msr	PMSCR_EL2, x13
-#endif
 	ldr	x14, [x0, #CTX_SCTLR_EL2]
 	msr	sctlr_el2, x14
 
@@ -288,13 +229,65 @@ func el2_sysregs_context_restore
 	ldp	x15, x16, [x0, #CTX_VTCR_EL2]
 	msr	vtcr_el2, x15
 	msr	vttbr_el2, x16
+	ret
+endfunc el2_sysregs_context_restore_common
+
+#if ENABLE_SPE_FOR_LOWER_ELS
+func el2_sysregs_context_save_spe
+	mrs	x13, PMSCR_EL2
+	str	x13, [x0, #CTX_PMSCR_EL2]
+	ret
+endfunc el2_sysregs_context_save_spe
+
+func el2_sysregs_context_restore_spe
+	ldr	x13, [x0, #CTX_PMSCR_EL2]
+	msr	PMSCR_EL2, x13
+	ret
+endfunc el2_sysregs_context_restore_spe
+#endif /* ENABLE_SPE_FOR_LOWER_ELS */
 
 #if CTX_INCLUDE_MTE_REGS
+func el2_sysregs_context_save_mte
+	mrs	x9, TFSR_EL2
+	str	x9, [x0, #CTX_TFSR_EL2]
+	ret
+endfunc el2_sysregs_context_save_mte
+
+func el2_sysregs_context_restore_mte
 	ldr	x9, [x0, #CTX_TFSR_EL2]
 	msr	TFSR_EL2, x9
-#endif
+	ret
+endfunc el2_sysregs_context_restore_mte
+#endif /* CTX_INCLUDE_MTE_REGS */
 
 #if ENABLE_MPAM_FOR_LOWER_ELS
+func el2_sysregs_context_save_mpam
+	mrs	x10, MPAM2_EL2
+	str	x10, [x0, #CTX_MPAM2_EL2]
+
+	mrs	x11, MPAMHCR_EL2
+	mrs	x12, MPAMVPM0_EL2
+	stp	x11, x12, [x0, #CTX_MPAMHCR_EL2]
+
+	mrs	x13, MPAMVPM1_EL2
+	mrs	x14, MPAMVPM2_EL2
+	stp	x13, x14, [x0, #CTX_MPAMVPM1_EL2]
+
+	mrs	x15, MPAMVPM3_EL2
+	mrs	x16, MPAMVPM4_EL2
+	stp	x15, x16, [x0, #CTX_MPAMVPM3_EL2]
+
+	mrs	x9, MPAMVPM5_EL2
+	mrs	x10, MPAMVPM6_EL2
+	stp	x9, x10, [x0, #CTX_MPAMVPM5_EL2]
+
+	mrs	x11, MPAMVPM7_EL2
+	mrs	x12, MPAMVPMV_EL2
+	stp	x11, x12, [x0, #CTX_MPAMVPM7_EL2]
+	ret
+endfunc func el2_sysregs_context_save_mpam
+
+func el2_sysregs_context_restore_mpam
 	ldr	x10, [x0, #CTX_MPAM2_EL2]
 	msr	MPAM2_EL2, x10
 
@@ -317,12 +310,37 @@ func el2_sysregs_context_restore
 	ldp	x11, x12, [x0, #CTX_MPAMVPM7_EL2]
 	msr	MPAMVPM7_EL2, x11
 	msr	MPAMVPMV_EL2, x12
-#endif
+	ret
+endfunc el2_sysregs_context_restore_mpam
+#endif /* ENABLE_MPAM_FOR_LOWER_ELS */
 
-#if ARM_ARCH_AT_LEAST(8, 6)
-	ldp	x13, x14, [x0, #CTX_HAFGRTR_EL2]
-	msr	HAFGRTR_EL2, x13
-	msr	HDFGRTR_EL2, x14
+#if ENABLE_FEAT_FGT
+func el2_sysregs_context_save_fgt
+	mrs	x13, HDFGRTR_EL2
+#if ENABLE_FEAT_AMUv1
+	mrs	x14, HAFGRTR_EL2
+	stp	x13, x14, [x0, #CTX_HDFGRTR_EL2]
+#else
+	str	x13, [x0, #CTX_HDFGRTR_EL2]
+#endif /* ENABLE_FEAT_AMUv1 */
+	mrs	x15, HDFGWTR_EL2
+	mrs	x16, HFGITR_EL2
+	stp	x15, x16, [x0, #CTX_HDFGWTR_EL2]
+
+	mrs	x9, HFGRTR_EL2
+	mrs	x10, HFGWTR_EL2
+	stp	x9, x10, [x0, #CTX_HFGRTR_EL2]
+	ret
+endfunc el2_sysregs_context_save_fgt
+
+func el2_sysregs_context_restore_fgt
+	#if ENABLE_FEAT_AMUv1
+	ldp	x13, x14, [x0, #CTX_HDFGRTR_EL2]
+	msr	HAFGRTR_EL2, x14
+#else
+	ldr	x13, [x0, #CTX_HDFGRTR_EL2]
+#endif /* ENABLE_FEAT_AMUv1 */
+	msr	HDFGRTR_EL2, x13
 
 	ldp	x15, x16, [x0, #CTX_HDFGWTR_EL2]
 	msr	HDFGWTR_EL2, x15
@@ -331,50 +349,145 @@ func el2_sysregs_context_restore
 	ldp	x9, x10, [x0, #CTX_HFGRTR_EL2]
 	msr	HFGRTR_EL2, x9
 	msr	HFGWTR_EL2, x10
+	ret
+endfunc el2_sysregs_context_restore_fgt
+#endif /* ENABLE_FEAT_FGT */
 
+#if ENABLE_FEAT_ECV
+func el2_sysregs_context_save_ecv
+	mrs	x11, CNTPOFF_EL2
+	str	x11, [x0, #CTX_CNTPOFF_EL2]
+	ret
+endfunc el2_sysregs_context_save_ecv
+
+func el2_sysregs_context_restore_ecv
 	ldr	x11, [x0, #CTX_CNTPOFF_EL2]
 	msr	CNTPOFF_EL2, x11
-#endif
+	ret
+endfunc el2_sysregs_context_restore_ecv
+#endif /* ENABLE_FEAT_ECV */
 
-#if ARM_ARCH_AT_LEAST(8, 4)
-	ldr	x12, [x0, #CTX_CONTEXTIDR_EL2]
-	msr	contextidr_el2, x12
+#if ENABLE_FEAT_VHE
+func el2_sysregs_context_save_vhe
+	/*
+	 * CONTEXTIDR_EL2 register is saved only when FEAT_VHE or
+	 * FEAT_Debugv8p2 (currently not in TF-A) is supported.
+	 */
+	mrs	x9, contextidr_el2
+	mrs	x10, ttbr1_el2
+	stp	x9, x10, [x0, #CTX_CONTEXTIDR_EL2]
+	ret
+endfunc el2_sysregs_context_save_vhe
 
-#if CTX_INCLUDE_AARCH32_REGS
-	ldr	x13, [x0, #CTX_SDER32_EL2]
-	msr	sder32_el2, x13
-#endif
-	ldp	x14, x15, [x0, #CTX_TTBR1_EL2]
-	msr	ttbr1_el2, x14
-	msr	vdisr_el2, x15
+func el2_sysregs_context_restore_vhe
+	/*
+	 * CONTEXTIDR_EL2 register is restored only when FEAT_VHE or
+	 * FEAT_Debugv8p2 (currently not in TF-A) is supported.
+	 */
+	ldp	x9, x10, [x0, #CTX_CONTEXTIDR_EL2]
+	msr	contextidr_el2, x9
+	msr	ttbr1_el2, x10
+	ret
+endfunc el2_sysregs_context_restore_vhe
+#endif /* ENABLE_FEAT_VHE */
+
+#if RAS_EXTENSION
+func el2_sysregs_context_save_ras
+	/*
+	 * VDISR_EL2 and VSESR_EL2 registers are saved only when
+	 * FEAT_RAS is supported.
+	 */
+	mrs	x11, vdisr_el2
+	mrs	x12, vsesr_el2
+	stp	x11, x12, [x0, #CTX_VDISR_EL2]
+	ret
+endfunc el2_sysregs_context_save_ras
+
+func el2_sysregs_context_restore_ras
+	/*
+	 * VDISR_EL2 and VSESR_EL2 registers are restored only when FEAT_RAS
+	 * is supported.
+	 */
+	ldp	x11, x12, [x0, #CTX_VDISR_EL2]
+	msr	vdisr_el2, x11
+	msr	vsesr_el2, x12
+	ret
+endfunc el2_sysregs_context_restore_ras
+#endif /* RAS_EXTENSION */
 
 #if CTX_INCLUDE_NEVE_REGS
+func el2_sysregs_context_save_nv2
+	/*
+	 * VNCR_EL2 register is saved only when FEAT_NV2 is supported.
+	 */
+	mrs	x16, vncr_el2
+	str	x16, [x0, #CTX_VNCR_EL2]
+	ret
+endfunc el2_sysregs_context_save_nv2
+
+func el2_sysregs_context_restore_nv2
+	/*
+	 * VNCR_EL2 register is restored only when FEAT_NV2 is supported.
+	 */
 	ldr	x16, [x0, #CTX_VNCR_EL2]
 	msr	vncr_el2, x16
-#endif
+	ret
+endfunc el2_sysregs_context_restore_nv2
+#endif /* CTX_INCLUDE_NEVE_REGS */
 
-	ldp	x9, x10, [x0, #CTX_VSESR_EL2]
-	msr	vsesr_el2, x9
-	msr	vstcr_el2, x10
+#if ENABLE_TRF_FOR_NS
+func el2_sysregs_context_save_trf
+	/*
+	 * TRFCR_EL2 register is saved only when FEAT_TRF is supported.
+	 */
+	mrs	x12, TRFCR_EL2
+	str	x12, [x0, #CTX_TRFCR_EL2]
+	ret
+endfunc el2_sysregs_context_save_trf
 
-	ldp	x11, x12, [x0, #CTX_VSTTBR_EL2]
-	msr	vsttbr_el2, x11
+func el2_sysregs_context_restore_trf
+	/*
+	 * TRFCR_EL2 register is restored only when FEAT_TRF is supported.
+	 */
+	ldr	x12, [x0, #CTX_TRFCR_EL2]
 	msr	TRFCR_EL2, x12
-#endif
+	ret
+endfunc el2_sysregs_context_restore_trf
+#endif /* ENABLE_TRF_FOR_NS */
 
-#if ARM_ARCH_AT_LEAST(8, 5)
+#if ENABLE_FEAT_CSV2_2
+func el2_sysregs_context_save_csv2
+	/*
+	 * SCXTNUM_EL2 register is saved only when FEAT_CSV2_2 is supported.
+	 */
+	mrs	x13, scxtnum_el2
+	str	x13, [x0, #CTX_SCXTNUM_EL2]
+	ret
+endfunc el2_sysregs_context_save_csv2
+
+func el2_sysregs_context_restore_csv2
+	/*
+	 * SCXTNUM_EL2 register is restored only when FEAT_CSV2_2 is supported.
+	 */
 	ldr	x13, [x0, #CTX_SCXTNUM_EL2]
 	msr	scxtnum_el2, x13
-#endif
+	ret
+endfunc el2_sysregs_context_restore_csv2
+#endif /* ENABLE_FEAT_CSV2_2 */
 
 #if ENABLE_FEAT_HCX
+func el2_sysregs_context_save_hcx
+	mrs	x14, hcrx_el2
+	str	x14, [x0, #CTX_HCRX_EL2]
+	ret
+endfunc el2_sysregs_context_save_hcx
+
+func el2_sysregs_context_restore_hcx
 	ldr	x14, [x0, #CTX_HCRX_EL2]
 	msr	hcrx_el2, x14
-#endif
-
 	ret
-endfunc el2_sysregs_context_restore
-
+endfunc el2_sysregs_context_restore_hcx
+#endif /* ENABLE_FEAT_HCX */
 #endif /* CTX_INCLUDE_EL2_REGS */
 
 /* ------------------------------------------------------------------
@@ -394,7 +507,7 @@ func el1_sysregs_context_save
 	mrs	x15, sctlr_el1
 	mrs	x16, tcr_el1
 	stp	x15, x16, [x0, #CTX_SCTLR_EL1]
-#endif
+#endif /* ERRATA_SPECULATIVE_AT */
 
 	mrs	x17, cpacr_el1
 	mrs	x9, csselr_el1
@@ -445,7 +558,7 @@ func el1_sysregs_context_save
 	mrs	x15, dacr32_el2
 	mrs	x16, ifsr32_el2
 	stp	x15, x16, [x0, #CTX_DACR32_EL2]
-#endif
+#endif /* CTX_INCLUDE_AARCH32_REGS */
 
 	/* Save NS timer registers if the build has instructed so */
 #if NS_TIMER_SWITCH
@@ -459,7 +572,7 @@ func el1_sysregs_context_save
 
 	mrs	x14, cntkctl_el1
 	str	x14, [x0, #CTX_CNTKCTL_EL1]
-#endif
+#endif /* NS_TIMER_SWITCH */
 
 	/* Save MTE system registers if the build has instructed so */
 #if CTX_INCLUDE_MTE_REGS
@@ -470,7 +583,7 @@ func el1_sysregs_context_save
 	mrs	x9, RGSR_EL1
 	mrs	x10, GCR_EL1
 	stp	x9, x10, [x0, #CTX_RGSR_EL1]
-#endif
+#endif /* CTX_INCLUDE_MTE_REGS */
 
 	ret
 endfunc el1_sysregs_context_save
@@ -493,7 +606,7 @@ func el1_sysregs_context_restore
 	ldp	x15, x16, [x0, #CTX_SCTLR_EL1]
 	msr	sctlr_el1, x15
 	msr	tcr_el1, x16
-#endif
+#endif /* ERRATA_SPECULATIVE_AT */
 
 	ldp	x17, x9, [x0, #CTX_CPACR_EL1]
 	msr	cpacr_el1, x17
@@ -544,7 +657,8 @@ func el1_sysregs_context_restore
 	ldp	x15, x16, [x0, #CTX_DACR32_EL2]
 	msr	dacr32_el2, x15
 	msr	ifsr32_el2, x16
-#endif
+#endif /* CTX_INCLUDE_AARCH32_REGS */
+
 	/* Restore NS timer registers if the build has instructed so */
 #if NS_TIMER_SWITCH
 	ldp	x10, x11, [x0, #CTX_CNTP_CTL_EL0]
@@ -557,7 +671,8 @@ func el1_sysregs_context_restore
 
 	ldr	x14, [x0, #CTX_CNTKCTL_EL1]
 	msr	cntkctl_el1, x14
-#endif
+#endif /* NS_TIMER_SWITCH */
+
 	/* Restore MTE system registers if the build has instructed so */
 #if CTX_INCLUDE_MTE_REGS
 	ldp	x11, x12, [x0, #CTX_TFSRE0_EL1]
@@ -567,7 +682,7 @@ func el1_sysregs_context_restore
 	ldp	x13, x14, [x0, #CTX_RGSR_EL1]
 	msr	RGSR_EL1, x13
 	msr	GCR_EL1, x14
-#endif
+#endif /* CTX_INCLUDE_MTE_REGS */
 
 	/* No explict ISB required here as ERET covers it */
 	ret
@@ -615,7 +730,7 @@ func fpregs_context_save
 #if CTX_INCLUDE_AARCH32_REGS
 	mrs	x11, fpexc32_el2
 	str	x11, [x0, #CTX_FP_FPEXC32_EL2]
-#endif
+#endif /* CTX_INCLUDE_AARCH32_REGS */
 	ret
 endfunc fpregs_context_save
 
@@ -660,7 +775,8 @@ func fpregs_context_restore
 #if CTX_INCLUDE_AARCH32_REGS
 	ldr	x11, [x0, #CTX_FP_FPEXC32_EL2]
 	msr	fpexc32_el2, x11
-#endif
+#endif /* CTX_INCLUDE_AARCH32_REGS */
+
 	/*
 	 * No explict ISB required here as ERET to
 	 * switch to secure EL1 or non-secure world
@@ -671,23 +787,37 @@ func fpregs_context_restore
 endfunc fpregs_context_restore
 #endif /* CTX_INCLUDE_FPREGS */
 
+	/*
+	 * Set the PSTATE bits not set when the exception was taken as
+	 * described in the AArch64.TakeException() pseudocode function
+	 * in ARM DDI 0487F.c page J1-7635 to a default value.
+	 */
+	.macro set_unset_pstate_bits
+	/*
+	 * If Data Independent Timing (DIT) functionality is implemented,
+	 * always enable DIT in EL3
+	 */
+#if ENABLE_FEAT_DIT
+	mov     x8, #DIT_BIT
+	msr     DIT, x8
+#endif /* ENABLE_FEAT_DIT */
+	.endm /* set_unset_pstate_bits */
+
 /* ------------------------------------------------------------------
- * The following function is used to save and restore all the general
+ * The following macro is used to save and restore all the general
  * purpose and ARMv8.3-PAuth (if enabled) registers.
- * It also checks if Secure Cycle Counter is not disabled in MDCR_EL3
- * when ARMv8.5-PMU is implemented, and if called from Non-secure
- * state saves PMCR_EL0 and disables Cycle Counter.
+ * It also checks if the Secure Cycle Counter (PMCCNTR_EL0)
+ * is disabled in EL3/Secure (ARMv8.5-PMU), wherein PMCCNTR_EL0
+ * needs not to be saved/restored during world switch.
  *
  * Ideally we would only save and restore the callee saved registers
  * when a world switch occurs but that type of implementation is more
  * complex. So currently we will always save and restore these
  * registers on entry and exit of EL3.
- * These are not macros to ensure their invocation fits within the 32
- * instructions per exception vector.
  * clobbers: x18
  * ------------------------------------------------------------------
  */
-func save_gp_pmcr_pauth_regs
+	.macro save_gp_pmcr_pauth_regs
 	stp	x0, x1, [sp, #CTX_GPREGS_OFFSET + CTX_GPREG_X0]
 	stp	x2, x3, [sp, #CTX_GPREGS_OFFSET + CTX_GPREG_X2]
 	stp	x4, x5, [sp, #CTX_GPREGS_OFFSET + CTX_GPREG_X4]
@@ -707,9 +837,17 @@ func save_gp_pmcr_pauth_regs
 	str	x18, [sp, #CTX_GPREGS_OFFSET + CTX_GPREG_SP_EL0]
 
 	/* ----------------------------------------------------------
-	 * Check if earlier initialization MDCR_EL3.SCCD/MCCD to 1
-	 * failed, meaning that FEAT_PMUv3p5/7 is not implemented and
-	 * PMCR_EL0 should be saved in non-secure context.
+	 * Check if earlier initialization of MDCR_EL3.SCCD/MCCD to 1
+	 * has failed.
+	 *
+	 * MDCR_EL3:
+	 * MCCD bit set, Prohibits the Cycle Counter PMCCNTR_EL0 from
+	 * counting at EL3.
+	 * SCCD bit set, Secure Cycle Counter Disable. Prohibits PMCCNTR_EL0
+	 * from counting in Secure state.
+	 * If these bits are not set, meaning that FEAT_PMUv3p5/7 is
+	 * not implemented and PMCR_EL0 should be saved in non-secure
+	 * context.
 	 * ----------------------------------------------------------
 	 */
 	mov_imm	x10, (MDCR_SCCD_BIT | MDCR_MCCD_BIT)
@@ -717,7 +855,13 @@ func save_gp_pmcr_pauth_regs
 	tst	x9, x10
 	bne	1f
 
-	/* Secure Cycle Counter is not disabled */
+	/* ----------------------------------------------------------
+	 * If control reaches here, it ensures the Secure Cycle
+	 * Counter (PMCCNTR_EL0) is not prohibited from counting at
+	 * EL3 and in secure states.
+	 * Henceforth, PMCR_EL0 to be saved before world switch.
+	 * ----------------------------------------------------------
+	 */
 	mrs	x9, pmcr_el0
 
 	/* Check caller's security state */
@@ -758,9 +902,28 @@ func save_gp_pmcr_pauth_regs
 	stp	x26, x27, [x19, #CTX_PACDBKEY_LO]
 	stp	x28, x29, [x19, #CTX_PACGAKEY_LO]
 #endif /* CTX_INCLUDE_PAUTH_REGS */
+	.endm /* save_gp_pmcr_pauth_regs */
 
+/* -----------------------------------------------------------------
+ * This function saves the context and sets the PSTATE to a known
+ * state, preparing entry to el3.
+ * Save all the general purpose and ARMv8.3-PAuth (if enabled)
+ * registers.
+ * Then set any of the PSTATE bits that are not set by hardware
+ * according to the Aarch64.TakeException pseudocode in the Arm
+ * Architecture Reference Manual to a default value for EL3.
+ * clobbers: x17
+ * -----------------------------------------------------------------
+ */
+func prepare_el3_entry
+	save_gp_pmcr_pauth_regs
+	/*
+	 * Set the PSTATE bits not described in the Aarch64.TakeException
+	 * pseudocode to their default values.
+	 */
+	set_unset_pstate_bits
 	ret
-endfunc save_gp_pmcr_pauth_regs
+endfunc prepare_el3_entry
 
 /* ------------------------------------------------------------------
  * This function restores ARMv8.3-PAuth (if enabled) and all general
@@ -889,7 +1052,7 @@ func el3_exit
 	mrs	x17, spsel
 	cmp	x17, #MODE_SP_EL0
 	ASM_ASSERT(eq)
-#endif
+#endif /* ENABLE_ASSERTIONS */
 
 	/* ----------------------------------------------------------
 	 * Save the current SP_EL0 i.e. the EL3 runtime stack which
@@ -927,7 +1090,7 @@ func el3_exit
 	isb
 	msr	S3_6_C1_C2_0, x20 /* zcr_el3 */
 sve_not_enabled:
-#endif
+#endif /* IMAGE_BL31 */
 
 #if IMAGE_BL31 && DYNAMIC_WORKAROUND_CVE_2018_3639
 	/* ----------------------------------------------------------
@@ -938,7 +1101,8 @@ sve_not_enabled:
 	cbz	x17, 1f
 	blr	x17
 1:
-#endif
+#endif /* IMAGE_BL31 && DYNAMIC_WORKAROUND_CVE_2018_3639 */
+
 	restore_ptw_el1_sys_regs
 
 	/* ----------------------------------------------------------
@@ -961,10 +1125,12 @@ sve_not_enabled:
 	esb
 #else
 	dsb	sy
-#endif
+#endif /* IMAGE_BL31 && RAS_EXTENSION */
+
 #ifdef IMAGE_BL31
 	str	xzr, [sp, #CTX_EL3STATE_OFFSET + CTX_IS_IN_EL3]
-#endif
+#endif /* IMAGE_BL31 */
+
 	exception_return
 
 endfunc el3_exit

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021, ARM Limited and Contributors. All rights reserved.
+ * Copyright (c) 2015-2022, Arm Limited and Contributors. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -31,6 +31,7 @@
 	} while (0)
 
 #pragma weak plat_set_nv_ctr2
+#pragma weak plat_convert_pk
 
 
 static int cmp_auth_param_type_desc(const auth_param_type_desc_t *a,
@@ -202,6 +203,10 @@ static int auth_signature(const auth_method_param_sig_t *param,
 			NOTICE("ROTPK is not deployed on platform. "
 				"Skipping ROTPK verification.\n");
 		} else {
+			/* platform may store the hash of a prefixed, suffixed or modified pk */
+			rc = plat_convert_pk(pk_ptr, pk_len, &pk_ptr, &pk_len);
+			return_if_error(rc);
+
 			/* Ask the crypto-module to verify the key hash */
 			rc = crypto_mod_verify_hash(pk_ptr, pk_len,
 				    pk_hash_ptr, pk_hash_len);
@@ -301,6 +306,15 @@ int plat_set_nv_ctr2(void *cookie, const auth_img_desc_t *img_desc __unused,
 	return plat_set_nv_ctr(cookie, nv_ctr);
 }
 
+int plat_convert_pk(void *full_pk_ptr, unsigned int full_pk_len,
+		    void **hashed_pk_ptr, unsigned int *hashed_pk_len)
+{
+	*hashed_pk_ptr = full_pk_ptr;
+	*hashed_pk_len = full_pk_len;
+
+	return 0;
+}
+
 /*
  * Return the parent id in the output parameter '*parent_id'
  *
@@ -338,9 +352,6 @@ void auth_mod_init(void)
 {
 	/* Check we have a valid CoT registered */
 	assert(cot_desc_ptr != NULL);
-
-	/* Crypto module */
-	crypto_mod_init();
 
 	/* Image parser module */
 	img_parser_init();

@@ -26,3 +26,6 @@ Xilinx Versal NET platform specific build options
     -   `pl011`, `pl011_0`: ARM pl011 UART 0
     -   `pl011_1`         : ARM pl011 UART 1
 
+*   `TFA_NO_PM` : Platform Management support.
+    -    0 : Enable Platform Management (Default)
+    -    1 : Disable Platform Management

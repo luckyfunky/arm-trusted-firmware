@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, ARM Limited and Contributors. All rights reserved.
+ * Copyright (c) 2021-2022, ARM Limited and Contributors. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -21,6 +21,16 @@
 #define MTK_MCDI_SRAM_BASE	0x11B000
 #define MTK_MCDI_SRAM_MAP_SIZE	0x1000
 
+#define APUSYS_BASE			0x19000000
+#define APUSYS_SCTRL_REVISER_BASE	0x19021000
+#define APUSYS_SCTRL_REVISER_SIZE	0x1000
+#define APUSYS_APU_S_S_4_BASE		0x190F2000
+#define APUSYS_APU_S_S_4_SIZE		0x1000
+#define APUSYS_APU_PLL_BASE		0x190F3000
+#define APUSYS_APU_PLL_SIZE		0x1000
+#define APUSYS_APU_ACC_BASE		0x190F4000
+#define APUSYS_APU_ACC_SIZE		0x1000
+
 #define TOPCKGEN_BASE           (IO_PHYS + 0x00000000)
 #define INFRACFG_AO_BASE        (IO_PHYS + 0x00001000)
 #define SPM_BASE		(IO_PHYS + 0x00006000)
@@ -38,9 +48,9 @@
 /*******************************************************************************
  * DP/eDP related constants
  ******************************************************************************/
-#define eDP_SEC_BASE		(IO_PHYS + 0x0C504000)
+#define EDP_SEC_BASE		(IO_PHYS + 0x0C504000)
 #define DP_SEC_BASE		(IO_PHYS + 0x0C604000)
-#define eDP_SEC_SIZE		0x1000
+#define EDP_SEC_SIZE		0x1000
 #define DP_SEC_SIZE		0x1000
 
 /*******************************************************************************

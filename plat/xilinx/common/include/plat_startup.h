@@ -7,6 +7,8 @@
 #ifndef PLAT_STARTUP_H
 #define PLAT_STARTUP_H
 
+#include <common/bl_common.h>
+
 /* For FSBL handover */
 enum fsbl_handoff {
 	FSBL_HANDOFF_SUCCESS = 0,
@@ -15,7 +17,7 @@ enum fsbl_handoff {
 	FSBL_HANDOFF_TOO_MANY_PARTS
 };
 
-#define FSBL_MAX_PARTITIONS		8
+#define FSBL_MAX_PARTITIONS		8U
 
 /* Structure corresponding to each partition entry */
 struct xfsbl_partition {
@@ -32,8 +34,8 @@ struct xfsbl_atf_handoff_params {
 
 #define ATF_HANDOFF_PARAMS_MAX_SIZE	sizeof(struct xfsbl_atf_handoff_params)
 
-enum fsbl_handoff fsbl_atf_handover(entry_point_info_t *bl32_image_ep_info,
-					entry_point_info_t *bl33_image_ep_info,
+enum fsbl_handoff fsbl_atf_handover(entry_point_info_t *bl32,
+					entry_point_info_t *bl33,
 					uint64_t atf_handoff_addr);
 
 #endif /* PLAT_STARTUP_H */

@@ -15,7 +15,7 @@
  ******************************************************************************/
 
 /* Size of cacheable stacks */
-#define PLATFORM_STACK_SIZE	0x440
+#define PLATFORM_STACK_SIZE	U(0x440)
 
 #define PLATFORM_CORE_COUNT		U(2)
 #define PLAT_MAX_PWR_LVL		U(1)
@@ -91,7 +91,7 @@
  */
 #define PLAT_VERSAL_G1S_IRQS	VERSAL_IRQ_SEC_PHY_TIMER
 #define PLAT_VERSAL_G0_IRQS	VERSAL_IRQ_SEC_PHY_TIMER
-#define PLAT_VERSAL_IPI_IRQ	62
+#define PLAT_VERSAL_IPI_IRQ	U(62)
 
 #define PLAT_VERSAL_G1S_IRQ_PROPS(grp) \
 	INTR_PROP_DESC(VERSAL_IRQ_SEC_PHY_TIMER, GIC_HIGHEST_SEC_PRIORITY, grp, \

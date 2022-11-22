@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2018-2021, ARM Limited and Contributors. All rights reserved.
+ * Copyright (c) 2018-2022, ARM Limited and Contributors. All rights reserved.
+ * Copyright (c) 2019-2022, Xilinx, Inc. All rights reserved.
+ * Copyright (c) 2022, Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -10,6 +12,7 @@
 #include <plat/arm/common/smccc_def.h>
 #include <plat/common/common_def.h>
 
+/* number of interrupt handlers. increase as required */
 #define MAX_INTR_EL3			2
 /* List all consoles */
 #define VERSAL_CONSOLE_ID_pl011	1
@@ -21,9 +24,9 @@
 
 /* List all supported platforms */
 #define VERSAL_PLATFORM_ID_versal_virt	1
-#define VERSAL_PLATFORM_ID_silicon	4
 #define VERSAL_PLATFORM_ID_spp_itr6	2
 #define VERSAL_PLATFORM_ID_emu_itr6	3
+#define VERSAL_PLATFORM_ID_silicon	4
 
 #define VERSAL_PLATFORM_IS(con)	(VERSAL_PLATFORM_ID_ ## con == VERSAL_PLATFORM)
 
@@ -37,20 +40,6 @@
 #define DEVICE0_SIZE		0x00E00000
 #define DEVICE1_BASE		0xF9000000
 #define DEVICE1_SIZE		0x00800000
-
-/* CRL */
-#define VERSAL_CRL				0xFF5E0000
-#define VERSAL_CRL_TIMESTAMP_REF_CTRL		(VERSAL_CRL + 0x14C)
-#define VERSAL_CRL_RST_TIMESTAMP_OFFSET	(VERSAL_CRL + 0x348)
-
-#define VERSAL_CRL_APB_TIMESTAMP_REF_CTRL_CLKACT_BIT	(1 << 25)
-
-/* IOU SCNTRS */
-#define VERSAL_IOU_SCNTRS			 0xFF140000
-#define VERSAL_IOU_SCNTRS_COUNTER_CONTROL_REG	(VERSAL_IOU_SCNTRS + 0x0)
-#define VERSAL_IOU_SCNTRS_BASE_FREQ		(VERSAL_IOU_SCNTRS + 0x20)
-
-#define VERSAL_IOU_SCNTRS_CONTROL_EN	1
 
 /*******************************************************************************
  * IRQ constants
@@ -153,17 +142,5 @@
 #define IPI4_TRIG_BIT		(1U << 5U)
 #define IPI5_REG_BASE		U(0xFF380000)
 #define IPI5_TRIG_BIT		(1U << 6U)
-
-/*******************************************************************************
- * interrupt handling related constants
- ******************************************************************************/
-#define ARM_IRQ_SEC_SGI_0	8
-#define ARM_IRQ_SEC_SGI_1	9
-#define ARM_IRQ_SEC_SGI_2	10
-#define ARM_IRQ_SEC_SGI_3	11
-#define ARM_IRQ_SEC_SGI_4	12
-#define ARM_IRQ_SEC_SGI_5	13
-#define ARM_IRQ_SEC_SGI_6	14
-#define ARM_IRQ_SEC_SGI_7	15
 
 #endif /* VERSAL_DEF_H */

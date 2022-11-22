@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2021, ARM Limited and Contributors. All rights reserved.
- * Portions copyright (c) 2021, ProvenRun S.A.S. All rights reserved.
+ * Copyright (c) 2021-2022, ARM Limited and Contributors. All rights reserved.
+ * Portions copyright (c) 2021-2022, ProvenRun S.A.S. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -8,7 +8,15 @@
 #ifndef __PNCD_PRIVATE_H__
 #define __PNCD_PRIVATE_H__
 
+#ifndef __ASSEMBLER__
+#include <stdint.h>
+#endif /* __ASSEMBLER __ */
+
 #include <context.h>
+#ifndef __ASSEMBLER__
+#include <lib/cassert.h>
+#endif /* __ASSEMBLER __ */
+
 #include <platform_def.h>
 
 /*******************************************************************************
@@ -31,10 +39,6 @@
 #define PNCD_C_RT_CTX_ENTRIES		(PNCD_C_RT_CTX_SIZE >> DWORD_SHIFT)
 
 #ifndef __ASSEMBLER__
-
-#include <stdint.h>
-
-#include <lib/cassert.h>
 
 /* AArch64 callee saved general purpose register context structure. */
 DEFINE_REG_STRUCT(c_rt_regs, PNCD_C_RT_CTX_ENTRIES);

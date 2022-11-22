@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2022, Xilinx, Inc. All rights reserved.
+ * Copyright (C) 2022, Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -9,8 +10,9 @@
 #ifndef PLAT_IPI_H
 #define PLAT_IPI_H
 
-#include <ipi.h>
 #include <stdint.h>
+
+#include <ipi.h>
 
 /*********************************************************************
  * IPI agent IDs macros

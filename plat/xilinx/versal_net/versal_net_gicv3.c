@@ -1,17 +1,19 @@
 /*
  * Copyright (c) 2018-2019, ARM Limited and Contributors. All rights reserved.
- * Copyright (c) 2021-2022, Xilinx, Inc. All rights reserved.
+ * Copyright (c) 2018-2022, Xilinx, Inc. All rights reserved.
+ * Copyright (C) 2022, Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include <plat_private.h>
-#include <platform_def.h>
 #include <common/debug.h>
 #include <common/interrupt_props.h>
 #include <drivers/arm/gicv3.h>
 #include <lib/utils.h>
 #include <plat/common/platform.h>
+
+#include <plat_private.h>
+#include <platform_def.h>
 
 /******************************************************************************
  * The following functions are defined as weak to allow a platform to override
@@ -29,8 +31,8 @@
 static uintptr_t rdistif_base_addrs[PLATFORM_CORE_COUNT];
 
 static const uintptr_t gicr_base_addrs[2] = {
-        PLAT_VERSAL_NET_GICR_BASE,     /* GICR Base address of the primary CPU */
-        0U                      /* Zero Termination */
+	PLAT_VERSAL_NET_GICR_BASE,	/* GICR Base address of the primary CPU */
+	0U				/* Zero Termination */
 };
 
 /* List of zero terminated GICR frame addresses which CPUs will probe */

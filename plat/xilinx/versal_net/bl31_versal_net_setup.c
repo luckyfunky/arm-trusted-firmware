@@ -1,29 +1,30 @@
 /*
  * Copyright (c) 2018-2020, ARM Limited and Contributors. All rights reserved.
- * Copyright (c) 2021-2022, Xilinx, Inc. All rights reserved.
+ * Copyright (c) 2018-2022, Xilinx, Inc. All rights reserved.
+ * Copyright (C) 2022, Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
 #include <assert.h>
 #include <errno.h>
-#include <plat_arm.h>
-#include <plat_private.h>
+
 #include <bl31/bl31.h>
 #include <common/bl_common.h>
 #include <common/debug.h>
+#include <common/fdt_fixup.h>
+#include <common/fdt_wrappers.h>
 #include <drivers/arm/pl011.h>
 #include <drivers/console.h>
 #include <lib/mmio.h>
 #include <lib/xlat_tables/xlat_tables_v2.h>
+#include <libfdt.h>
 #include <plat/common/platform.h>
-#include <versal_net_def.h>
+#include <plat_arm.h>
+
 #include <plat_private.h>
 #include <plat_startup.h>
-
-#include <common/fdt_fixup.h>
-#include <common/fdt_wrappers.h>
-#include <libfdt.h>
+#include <versal_net_def.h>
 
 static entry_point_info_t bl32_image_ep_info;
 static entry_point_info_t bl33_image_ep_info;
@@ -80,6 +81,7 @@ void bl31_early_platform_setup2(u_register_t arg0, u_register_t arg1,
 	case VERSAL_NET_EMU:
 		cpu_clock = 3660000;
 		uart_clock = 25000000;
+		break;
 	case VERSAL_NET_QEMU:
 		/* Random values now */
 		cpu_clock = 100000000;
@@ -95,7 +97,8 @@ void bl31_early_platform_setup2(u_register_t arg0, u_register_t arg1,
 
 	/* Initialize the console to provide early debug support */
 	rc = console_pl011_register(VERSAL_NET_UART_BASE, uart_clock,
-				    VERSAL_NET_UART_BAUDRATE, &versal_net_runtime_console);
+				    VERSAL_NET_UART_BAUDRATE,
+				    &versal_net_runtime_console);
 	if (rc == 0) {
 		panic();
 	}
@@ -135,17 +138,19 @@ static versal_intr_info_type_el3_t type_el3_interrupt_table[MAX_INTR_EL3];
 
 int request_intr_type_el3(uint32_t id, interrupt_type_handler_t handler)
 {
-	static uint32_t index = 0;
+	static uint32_t index;
 	uint32_t i;
 
 	/* Validate 'handler' and 'id' parameters */
-	if (handler == NULL || index >= MAX_INTR_EL3)
+	if (handler == NULL || index >= MAX_INTR_EL3) {
 		return -EINVAL;
+	}
 
 	/* Check if a handler has already been registered */
 	for (i = 0; i < index; i++) {
-		if (id == type_el3_interrupt_table[i].id)
+		if (id == type_el3_interrupt_table[i].id) {
 			return -EALREADY;
+		}
 	}
 
 	type_el3_interrupt_table[index].id = id;
@@ -171,8 +176,9 @@ static uint64_t rdo_el3_interrupt_handler(uint32_t id, uint32_t flags,
 		}
 	}
 
-	if (handler != NULL)
+	if (handler != NULL) {
 		handler(intr_id, flags, handle, cookie);
+	}
 
 	return 0;
 }

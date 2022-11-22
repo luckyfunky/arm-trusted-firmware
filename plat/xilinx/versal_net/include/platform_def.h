@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2018-2020, ARM Limited and Contributors. All rights reserved.
  * Copyright (c) 2021-2022, Xilinx, Inc. All rights reserved.
+ * Copyright (C) 2022, Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -16,16 +17,16 @@
  ******************************************************************************/
 
 /* Size of cacheable stacks */
-#define PLATFORM_STACK_SIZE	0x440
+#define PLATFORM_STACK_SIZE		U(0x440)
 
 #define PLATFORM_CLUSTER_COUNT		U(4)
-#define PLATFORM_CORE_COUNT_PER_CLUSTER	U(4) // 4 CPUs per cluster
+#define PLATFORM_CORE_COUNT_PER_CLUSTER	U(4) /* 4 CPUs per cluster */
 
 #define PLATFORM_CORE_COUNT		(PLATFORM_CLUSTER_COUNT * PLATFORM_CORE_COUNT_PER_CLUSTER)
 
 #define PLAT_MAX_PWR_LVL		U(2)
 #define PLAT_MAX_RET_STATE		U(1)
-#define PLAT_MAX_OFF_STATE		2
+#define PLAT_MAX_OFF_STATE		U(2)
 
 /*******************************************************************************
  * BL31 specific defines.
@@ -42,7 +43,8 @@
 # define BL31_BASE			U(VERSAL_NET_ATF_MEM_BASE)
 # define BL31_LIMIT			U(VERSAL_NET_ATF_MEM_BASE + VERSAL_NET_ATF_MEM_SIZE - 1)
 # ifdef VERSAL_NET_ATF_MEM_PROGBITS_SIZE
-#  define BL31_PROGBITS_LIMIT		U(VERSAL_NET_ATF_MEM_BASE + VERSAL_NET_ATF_MEM_PROGBITS_SIZE - 1)
+#  define BL31_PROGBITS_LIMIT		U(VERSAL_NET_ATF_MEM_BASE + \
+					  VERSAL_NET_ATF_MEM_PROGBITS_SIZE - 1)
 # endif
 #endif
 

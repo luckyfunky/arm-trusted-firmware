@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2021, ARM Limited and Contributors. All rights reserved.
- * Portions copyright (c) 2021, ProvenRun S.A.S. All rights reserved.
+ * Copyright (c) 2021-2022, ProvenRun S.A.S. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -21,9 +20,9 @@
 #include <string.h>
 
 #include <arch_helpers.h>
-#include <bl_common.h>
 #include <bl31/bl31.h>
 #include <bl31/interrupt_mgmt.h>
+#include <bl_common.h>
 #include <common/debug.h>
 #include <common/ep_info.h>
 #include <drivers/arm/gic_common.h>
@@ -31,10 +30,9 @@
 #include <lib/spinlock.h>
 #include <plat/common/platform.h>
 #include <pnc.h>
+#include "pncd_private.h"
 #include <runtime_svc.h>
 #include <tools_share/uuid.h>
-
-#include "pncd_private.h"
 
 /*******************************************************************************
  * Structure to keep track of ProvenCore state
@@ -57,7 +55,7 @@ static void context_save(unsigned long security_state)
 	assert(sec_state_is_valid(security_state));
 
 	cm_el1_sysregs_context_save((uint32_t) security_state);
-#if SPD_PNCD_CTX_EAGER_SAVE_FPREGS
+#if CTX_INCLUDE_FPREGS
 	fpregs_context_save(get_fpregs_ctx(cm_get_context(security_state)));
 #endif
 }
@@ -74,7 +72,7 @@ static void *context_restore(unsigned long security_state)
 
 	/* Restore state */
 	cm_el1_sysregs_context_restore((uint32_t) security_state);
-#if SPD_PNCD_CTX_EAGER_SAVE_FPREGS
+#if CTX_INCLUDE_FPREGS
 	fpregs_context_restore(get_fpregs_ctx(cm_get_context(security_state)));
 #endif
 
@@ -117,7 +115,7 @@ void *pncd_context_switch_to(unsigned long security_state)
 		rc = register_interrupt_type_handler(INTR_TYPE_S_EL1,
 				pncd_sel1_interrupt_handler,
 				flags);
-		if (rc) {
+		if (rc != 0) {
 			ERROR("Failed to register S-EL1 interrupt handler (%d)\n",
 			      rc);
 			panic();
@@ -150,14 +148,14 @@ void *pncd_context_switch_to(unsigned long security_state)
 	if (read_mpidr() != pncd_sp_context.mpidr) {
 		if (sec_state_from == SECURE) {
 			/*
-			 * S -> NS world switch initiated on a CPU where there
+			 * Secure -> Non-Secure world switch initiated on a CPU where there
 			 * should be no Trusted OS running
 			 */
-			WARN("S -> NS switch requested on CPU where ProvenCore is not supposed to be running...\n");
+			WARN("Secure to Non-Secure switch requested on CPU where ProvenCore is not supposed to be running...\n");
 		}
 
 		/*
-		 * S or NS world wants to switch world but there is no S
+		 * Secure or Non-Secure world wants to switch world but there is no Secure
 		 * software on this core
 		 */
 		return cm_get_context((uint32_t) sec_state_from);
@@ -308,6 +306,8 @@ uintptr_t plat_pncd_smc_handler(uint32_t smc_fid,
  * responsible for communicating with the Secure payload to delegate work and
  * return results back to the non-secure state. Lastly it will also return any
  * information that the secure payload needs to do the work assigned to it.
+ *
+ * It should only be called with the smc_handler_lock held.
  ******************************************************************************/
 static uintptr_t pncd_smc_handler_unsafe(uint32_t smc_fid,
 		u_register_t x1,
@@ -323,7 +323,7 @@ static uintptr_t pncd_smc_handler_unsafe(uint32_t smc_fid,
 	/* Determine which security state this SMC originated from */
 	ns = is_caller_non_secure(flags);
 
-	assert(ns || read_mpidr() == pncd_sp_context.mpidr);
+	assert(ns != 0 || read_mpidr() == pncd_sp_context.mpidr);
 
 	switch (smc_fid) {
 	case SMC_CONFIG_SHAREDMEM:
@@ -377,7 +377,7 @@ static uintptr_t pncd_smc_handler_unsafe(uint32_t smc_fid,
 		break;
 
 	case SMC_ACTION_FROM_NS:
-		if (!ns) {
+		if (ns == 0) {
 			SMC_RET1(handle, SMC_UNK);
 		}
 
@@ -393,7 +393,7 @@ static uintptr_t pncd_smc_handler_unsafe(uint32_t smc_fid,
 		break;
 
 	case SMC_ACTION_FROM_S:
-		if (ns) {
+		if (ns != 0) {
 			SMC_RET1(handle, SMC_UNK);
 		}
 
@@ -412,8 +412,8 @@ static uintptr_t pncd_smc_handler_unsafe(uint32_t smc_fid,
 		break;
 
 	case SMC_YIELD:
-		assert(handle == cm_get_context(ns ? NON_SECURE : SECURE));
-		handle = pncd_context_switch_to(ns ? SECURE : NON_SECURE);
+		assert(handle == cm_get_context(ns != 0 ? NON_SECURE : SECURE));
+		handle = pncd_context_switch_to(ns != 0 ? SECURE : NON_SECURE);
 
 		assert(handle != NULL);
 

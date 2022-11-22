@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2022, ARM Limited and Contributors. All rights reserved.
  * Copyright (c) 2021-2022, Xilinx, Inc. All rights reserved.
+ * Copyright (C) 2022, Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -50,7 +51,7 @@
 #define RST_APU_CLUSTER_COLD_RESET	BIT(8)
 #define RST_APU_CLUSTER_WARM_RESET	BIT(9)
 
-#define PSX_CRF_RST_TIMESTAMP_OFFSET	U(0x33c)
+#define PSX_CRF_RST_TIMESTAMP_OFFSET	U(0x33C)
 
 #define APU_PCLI			U(0xECB10000)
 #define APU_PCLI_CPU_STEP		U(0x30)
@@ -67,10 +68,12 @@
 #define VERSAL_NET_PRIMARY_CPU		U(0)
 
 #define CORE_0_IEN_POWER_OFFSET			(0x00000018U)
-#define APU_PCIL_CORE_X_IEN_POWER_REG(cpu_id)	(APU_PCLI + (CORE_0_IEN_POWER_OFFSET + (0x30 * cpu_id)))
+#define APU_PCIL_CORE_X_IEN_POWER_REG(cpu_id)	(APU_PCLI + (CORE_0_IEN_POWER_OFFSET + \
+						 (0x30 * cpu_id)))
 #define APU_PCIL_CORE_X_IEN_POWER_MASK		(0x00000001U)
 #define CORE_0_IDS_POWER_OFFSET			(0x0000001CU)
-#define APU_PCIL_CORE_X_IDS_POWER_REG(cpu_id)	(APU_PCLI + (CORE_0_IDS_POWER_OFFSET + (0x30 * cpu_id)))
+#define APU_PCIL_CORE_X_IDS_POWER_REG(cpu_id)	(APU_PCLI + (CORE_0_IDS_POWER_OFFSET + \
+						 (0x30 * cpu_id)))
 #define APU_PCIL_CORE_X_IDS_POWER_MASK		(0x00000001U)
 #define CORE_PWRDN_EN_BIT_MASK			(0x1U)
 
@@ -94,7 +97,7 @@
 #define VERSAL_NET_CRL_TIMESTAMP_REF_CTRL_OFFSET	U(0x14C)
 #define VERSAL_NET_CRL_RST_TIMESTAMP_OFFSET		U(0x348)
 
-#define VERSAL_NET_CRL_APB_TIMESTAMP_REF_CTRL_CLKACT_BIT	(1UL << 25)
+#define VERSAL_NET_CRL_APB_TIMESTAMP_REF_CTRL_CLKACT_BIT	(1U << 25U)
 
 /* IOU SCNTRS */
 #define VERSAL_NET_IOU_SCNTRS					U(0xEC920000)

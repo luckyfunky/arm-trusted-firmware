@@ -1,12 +1,11 @@
 /*
  * Copyright (c) 2021-2022, ARM Limited and Contributors. All rights reserved.
- * Copyright (c) 2021-2022, Xilinx, Inc. All rights reserved.
+ * Copyright (c) 2018-2022, Xilinx, Inc. All rights reserved.
+ * Copyright (C) 2022, Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include <versal_net_def.h>
-#include <plat_private.h>
 #include <common/debug.h>
 #include <common/runtime_svc.h>
 #include <drivers/generic_delay_timer.h>
@@ -14,6 +13,9 @@
 #include <lib/xlat_tables/xlat_tables_v2.h>
 #include <plat/common/platform.h>
 #include <plat_ipi.h>
+
+#include <plat_private.h>
+#include <versal_net_def.h>
 
 uint32_t platform_id, platform_version;
 
@@ -106,7 +108,8 @@ void versal_net_config_setup(void)
 	mmio_write_32(crl_base + VERSAL_NET_CRL_RST_TIMESTAMP_OFFSET, 0);
 
 	/* Program freq register in System counter and enable system counter. */
-	mmio_write_32(iou_scntrs_base + VERSAL_NET_IOU_SCNTRS_BASE_FREQ_OFFSET, cpu_clock);
+	mmio_write_32(iou_scntrs_base + VERSAL_NET_IOU_SCNTRS_BASE_FREQ_OFFSET,
+		      cpu_clock);
 	mmio_write_32(iou_scntrs_base + VERSAL_NET_IOU_SCNTRS_COUNTER_CONTROL_REG_OFFSET,
 		      VERSAL_NET_IOU_SCNTRS_CONTROL_EN);
 

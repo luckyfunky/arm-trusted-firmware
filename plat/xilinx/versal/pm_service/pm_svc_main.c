@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2019-2021, Xilinx, Inc. All rights reserved.
+ * Copyright (c) 2019-2022, Xilinx, Inc. All rights reserved.
+ * Copyright (c) 2022, Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -13,16 +14,15 @@
 #include <plat_private.h>
 #include <stdbool.h>
 #include <common/runtime_svc.h>
-#include <lib/mmio.h>
 #include <plat/common/platform.h>
 #include "pm_api_sys.h"
 #include "pm_client.h"
 #include "pm_ipi.h"
 #include <drivers/arm/gicv3.h>
 #include "../drivers/arm/gic/v3/gicv3_private.h"
-#include "../lib/psci/psci_private.h"
 
 #define MODE				0x80000000U
+
 #define XSCUGIC_SGIR_EL1_INITID_SHIFT    24U
 #define INVALID_SGI    0xFFU
 #define PM_INIT_SUSPEND_CB	(30U)
@@ -31,14 +31,14 @@ DEFINE_RENAME_SYSREG_RW_FUNCS(icc_asgi1r_el1, S3_0_C12_C11_6)
 
 /* pm_up = true - UP, pm_up = false - DOWN */
 static bool pm_up;
-static unsigned int sgi = (unsigned int)INVALID_SGI;
+static uint32_t sgi = (uint32_t)INVALID_SGI;
 
 static void notify_os(void)
 {
-	int cpu;
-	unsigned int reg;
+	int32_t cpu;
+	uint32_t reg;
 
-	cpu = plat_my_core_pos() + 1;
+	cpu = plat_my_core_pos() + 1U;
 
 	reg = (cpu | (sgi << XSCUGIC_SGIR_EL1_INITID_SHIFT));
 	write_icc_asgi1r_el1(reg);
@@ -49,7 +49,7 @@ static uint64_t ipi_fiq_handler(uint32_t id, uint32_t flags, void *handle,
 {
 	uint32_t payload[4] = {0};
 
-	VERBOSE("Received IPI FIQ from firmware\r\n");
+	VERBOSE("Received IPI FIQ from firmware\n");
 
 	(void)plat_ic_acknowledge_interrupt();
 
@@ -63,7 +63,8 @@ static uint64_t ipi_fiq_handler(uint32_t id, uint32_t flags, void *handle,
 		break;
 	default:
 		pm_ipi_irq_clear(primary_proc);
-		WARN("Invalid IPI payload\r\n");
+		WARN("Invalid IPI payload\n");
+		break;
 	}
 
 	/* Clear FIQ */
@@ -84,14 +85,14 @@ static uint64_t ipi_fiq_handler(uint32_t id, uint32_t flags, void *handle,
  * Update the SGI number to be used.
  *
  */
-int pm_register_sgi(unsigned int sgi_num, unsigned int reset)
+int32_t pm_register_sgi(uint32_t sgi_num, uint32_t reset)
 {
-	if (reset == 1) {
+	if (reset == 1U) {
 		sgi = INVALID_SGI;
 		return 0;
 	}
 
-	if ((unsigned int)sgi != (unsigned int)INVALID_SGI) {
+	if (sgi != INVALID_SGI) {
 		return -EBUSY;
 	}
 
@@ -99,7 +100,7 @@ int pm_register_sgi(unsigned int sgi_num, unsigned int reset)
 		return -EINVAL;
 	}
 
-	sgi = (unsigned int)sgi_num;
+	sgi = (uint32_t)sgi_num;
 	return 0;
 }
 
@@ -116,18 +117,12 @@ int pm_register_sgi(unsigned int sgi_num, unsigned int reset)
  * Called from sip_svc_setup initialization function with the
  * rt_svc_init signature.
  */
-int pm_setup(void)
+int32_t pm_setup(void)
 {
-	int status, ret = 0;
+	int32_t ret = 0;
 
-	status = pm_ipi_init(primary_proc);
-
-	if (status < 0) {
-		INFO("BL31: PM Service Init Failed, Error Code %d!\n", status);
-		ret = status;
-	} else {
-		pm_up = true;
-	}
+	pm_ipi_init(primary_proc);
+	pm_up = true;
 
 	/*
 	 * Enable IPI IRQ
@@ -140,13 +135,9 @@ int pm_setup(void)
 	ret = request_intr_type_el3(PLAT_VERSAL_IPI_IRQ, ipi_fiq_handler);
 	if (ret != 0) {
 		WARN("BL31: registering IPI interrupt failed\n");
-		goto err;
 	}
 
-	gicd_write_irouter(gicv3_driver_data->gicd_base, PLAT_VERSAL_IPI_IRQ,
-			   MODE);
-
-err:
+	gicd_write_irouter(gicv3_driver_data->gicd_base, PLAT_VERSAL_IPI_IRQ, MODE);
 	return ret;
 }
 
@@ -177,7 +168,7 @@ static uintptr_t eemi_for_compatibility(uint32_t api_id, uint32_t *pm_arg,
 		if (ret == PM_RET_ERROR_NOTSUPPORTED)
 			return (uintptr_t)0;
 
-		SMC_RET1(handle, (uint64_t)ret | ((uint64_t)value) << 32);
+		SMC_RET1(handle, (uint64_t)ret | ((uint64_t)value) << 32U);
 	}
 
 	case PM_QUERY_DATA:
@@ -186,18 +177,18 @@ static uintptr_t eemi_for_compatibility(uint32_t api_id, uint32_t *pm_arg,
 
 		ret = pm_query_data(pm_arg[0], pm_arg[1], pm_arg[2],
 				    pm_arg[3], data, security_flag);
-		SMC_RET2(handle, (uint64_t)ret  | ((uint64_t)data[0] << 32),
-			 (uint64_t)data[1] | ((uint64_t)data[2] << 32));
-	}
 
+		SMC_RET2(handle, (uint64_t)ret | ((uint64_t)data[0] << 32U),
+			 (uint64_t)data[1] | ((uint64_t)data[2] << 32U));
+	}
 
 	case PM_FEATURE_CHECK:
 	{
 		uint32_t result[PAYLOAD_ARG_CNT] = {0U};
 
 		ret = pm_feature_check(pm_arg[0], result, security_flag);
-		SMC_RET2(handle, (uint64_t)ret | ((uint64_t)result[0] << 32),
-			 (uint64_t)result[1] | ((uint64_t)result[2] << 32));
+		SMC_RET2(handle, (uint64_t)ret | ((uint64_t)result[0] << 32U),
+			 (uint64_t)result[1] | ((uint64_t)result[2] << 32U));
 	}
 
 	case PM_LOAD_PDI:
@@ -270,11 +261,13 @@ static uintptr_t TF_A_specific_handler(uint32_t api_id, uint32_t *pm_arg,
 
 	case TF_A_PM_REGISTER_SGI:
 	{
-		int ret;
+		int32_t ret;
 
 		ret = pm_register_sgi(pm_arg[0], pm_arg[1]);
-		if (ret)
+		if (ret != 0) {
 			SMC_RET1(handle, (uint32_t)PM_RET_ERROR_ARGS);
+		}
+
 		SMC_RET1(handle, (uint32_t)PM_RET_SUCCESS);
 	}
 
@@ -282,15 +275,15 @@ static uintptr_t TF_A_specific_handler(uint32_t api_id, uint32_t *pm_arg,
 	{
 		uint32_t result[4] = {0};
 
-		pm_get_callbackdata(result, ARRAY_SIZE(result), security_flag, 1);
+		pm_get_callbackdata(result, ARRAY_SIZE(result), security_flag, 1U);
 		SMC_RET2(handle,
-			(uint64_t)result[0] | ((uint64_t)result[1] << 32),
-			(uint64_t)result[2] | ((uint64_t)result[3] << 32));
+			(uint64_t)result[0] | ((uint64_t)result[1] << 32U),
+			(uint64_t)result[2] | ((uint64_t)result[3] << 32U));
 	}
 
 	case PM_GET_TRUSTZONE_VERSION:
 		SMC_RET1(handle, (uint64_t)PM_RET_SUCCESS |
-			 ((uint64_t)TZ_VERSION << 32));
+			 ((uint64_t)TZ_VERSION << 32U));
 
 	default:
 		return (uintptr_t)0;
@@ -316,7 +309,6 @@ static uintptr_t eemi_handler(uint32_t api_id, uint32_t *pm_arg,
 	ret = pm_handle_eemi_call(security_flag, api_id, pm_arg[0], pm_arg[1],
 				  pm_arg[2], pm_arg[3], pm_arg[4],
 				  (uint64_t *)buf);
-
 	/*
 	 * Two IOCTLs, to get clock name and pinctrl name of pm_query_data API
 	 * receives 5 words of respoonse from firmware. Currently linux driver can
@@ -327,13 +319,13 @@ static uintptr_t eemi_handler(uint32_t api_id, uint32_t *pm_arg,
 		if ((pm_arg[0] == XPM_QID_CLOCK_GET_NAME ||
 		    pm_arg[0] == XPM_QID_PINCTRL_GET_FUNCTION_NAME) &&
 		    ret == PM_RET_SUCCESS) {
-			SMC_RET2(handle, (uint64_t)buf[0] | ((uint64_t)buf[1] << 32),
-				(uint64_t)buf[2] | ((uint64_t)buf[3] << 32));
+			SMC_RET2(handle, (uint64_t)buf[0] | ((uint64_t)buf[1] << 32U),
+				(uint64_t)buf[2] | ((uint64_t)buf[3] << 32U));
 		}
 	}
 
-	SMC_RET2(handle, (uint64_t)ret | ((uint64_t)buf[0] << 32),
-		 (uint64_t)buf[1] | ((uint64_t)buf[2] << 32));
+	SMC_RET2(handle, (uint64_t)ret | ((uint64_t)buf[0] << 32U),
+		 (uint64_t)buf[1] | ((uint64_t)buf[2] << 32U));
 }
 
 /**
@@ -354,7 +346,7 @@ static uintptr_t eemi_handler(uint32_t api_id, uint32_t *pm_arg,
  * function with rt_svc_handle signature
  */
 uint64_t pm_smc_handler(uint32_t smc_fid, uint64_t x1, uint64_t x2, uint64_t x3,
-			uint64_t x4, void *cookie, void *handle, uint64_t flags)
+			uint64_t x4, const void *cookie, void *handle, uint64_t flags)
 {
 	uintptr_t ret;
 	uint32_t pm_arg[PAYLOAD_ARG_CNT] = {0};
@@ -375,24 +367,27 @@ uint64_t pm_smc_handler(uint32_t smc_fid, uint64_t x1, uint64_t x2, uint64_t x3,
 	}
 
 	pm_arg[0] = (uint32_t)x1;
-	pm_arg[1] = (uint32_t)(x1 >> 32);
+	pm_arg[1] = (uint32_t)(x1 >> 32U);
 	pm_arg[2] = (uint32_t)x2;
-	pm_arg[3] = (uint32_t)(x2 >> 32);
+	pm_arg[3] = (uint32_t)(x2 >> 32U);
 	pm_arg[4] = (uint32_t)x3;
 	(void)(x4);
 	api_id = smc_fid & FUNCID_NUM_MASK;
 
 	ret = eemi_for_compatibility(api_id, pm_arg, handle, security_flag);
-	if (ret != (uintptr_t)0)
+	if (ret != (uintptr_t)0) {
 		return ret;
+	}
 
 	ret = eemi_psci_debugfs_handler(api_id, pm_arg, handle, flags);
-	if (ret !=  (uintptr_t)0)
+	if (ret !=  (uintptr_t)0) {
 		return ret;
+	}
 
 	ret = TF_A_specific_handler(api_id, pm_arg, handle, security_flag);
-	if (ret !=  (uintptr_t)0)
+	if (ret !=  (uintptr_t)0) {
 		return ret;
+	}
 
 	ret = eemi_handler(api_id, pm_arg, handle, security_flag);
 

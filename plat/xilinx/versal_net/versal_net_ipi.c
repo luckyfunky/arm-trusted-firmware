@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2022, Xilinx, Inc. All rights reserved.
+ * Copyright (C) 2022, Xilinx, Inc. All rights reserved.
+ * Copyright (C) 2022, Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -9,17 +10,19 @@
  */
 
 #include <errno.h>
-#include <ipi.h>
-#include <plat_ipi.h>
-#include <plat_private.h>
 #include <string.h>
+
 #include <common/debug.h>
 #include <common/runtime_svc.h>
 #include <lib/bakery_lock.h>
 #include <lib/mmio.h>
 
+#include <ipi.h>
+#include <plat_ipi.h>
+#include <plat_private.h>
+
 /* versal_net ipi configuration table */
-const static struct ipi_config versal_net_ipi_table[IPI_ID_MAX] = {
+static const struct ipi_config versal_net_ipi_table[IPI_ID_MAX] = {
 	/* A72 IPI */
 	[IPI_ID_APU] = {
 		.ipi_bit_mask = IPI0_TRIG_BIT,

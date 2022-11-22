@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, Xilinx, Inc. All rights reserved.
+ * Copyright (c) 2019-2022, Xilinx, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -63,11 +63,11 @@
 #define PM_LOAD_GET_HANDOFF_PARAMS	0x70BU
 
 /* IOCTL IDs for clock driver */
-#define IOCTL_SET_PLL_FRAC_MODE		8
-#define	IOCTL_GET_PLL_FRAC_MODE		9
-#define	IOCTL_SET_PLL_FRAC_DATA		10
-#define	IOCTL_GET_PLL_FRAC_DATA		11
-#define	IOCTL_SET_SGI			25
+#define IOCTL_SET_PLL_FRAC_MODE		8U
+#define	IOCTL_GET_PLL_FRAC_MODE		9U
+#define	IOCTL_SET_PLL_FRAC_DATA		10U
+#define	IOCTL_GET_PLL_FRAC_DATA		11U
+#define	IOCTL_SET_SGI			25U
 
 /* Parameter ID for PLL IOCTLs */
 /* Fractional data portion for PLL */

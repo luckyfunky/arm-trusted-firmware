@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2018-2021, ARM Limited and Contributors. All rights reserved.
+ * Copyright (c) 2018-2022, Xilinx, Inc. All rights reserved.
+ * Copyright (c) 2022, Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -53,7 +55,7 @@ static inline void bl31_set_default_config(void)
 	bl32_image_ep_info.spsr = (uint32_t)arm_get_spsr_for_bl32_entry();
 	bl33_image_ep_info.pc = (uintptr_t)plat_get_ns_image_entrypoint();
 	bl33_image_ep_info.spsr = (uint32_t)SPSR_64(MODE_EL2, MODE_SP_ELX,
-					  DISABLE_ALL_EXCEPTIONS);
+						    DISABLE_ALL_EXCEPTIONS);
 }
 
 /*
@@ -70,28 +72,29 @@ void bl31_early_platform_setup2(u_register_t arg0, u_register_t arg1,
 	enum pm_ret_status ret_status;
 	uint64_t addr[ATF_HANDOFF_PARAMS_MAX_SIZE];
 
-	if (VERSAL_CONSOLE_IS(pl011)) {
+	if (VERSAL_CONSOLE_IS(pl011) || (VERSAL_CONSOLE_IS(pl011_1))) {
 		static console_t versal_runtime_console;
 		/* Initialize the console to provide early debug support */
-		int rc = console_pl011_register((unsigned long)VERSAL_UART_BASE,
-						(unsigned int)VERSAL_UART_CLOCK,
-						(unsigned int)VERSAL_UART_BAUDRATE,
+		int32_t rc = console_pl011_register((uintptr_t)VERSAL_UART_BASE,
+						(uint32_t)VERSAL_UART_CLOCK,
+						(uint32_t)VERSAL_UART_BAUDRATE,
 						&versal_runtime_console);
 		if (rc == 0) {
 			panic();
 		}
 
-		console_set_scope(&versal_runtime_console, (unsigned int)(CONSOLE_FLAG_BOOT |
+		console_set_scope(&versal_runtime_console, (uint32_t)(CONSOLE_FLAG_BOOT |
 				  CONSOLE_FLAG_RUNTIME));
 	} else if (VERSAL_CONSOLE_IS(dcc)) {
 		/* Initialize the dcc console for debug */
-		int rc = console_dcc_register();
+		int32_t rc = console_dcc_register();
 		if (rc == 0) {
 			panic();
 		}
 	} else {
 		NOTICE("BL31: Did not register for any console.\n");
 	}
+
 	/* Initialize the platform config for future decision making */
 	versal_config_setup();
 	/* There are no parameters from BL2 if BL31 is a reset vector */
@@ -128,11 +131,11 @@ void bl31_early_platform_setup2(u_register_t arg0, u_register_t arg1,
 	if (ret == FSBL_HANDOFF_NO_STRUCT || ret == FSBL_HANDOFF_INVAL_STRUCT) {
 		bl31_set_default_config();
 	} else if (ret == FSBL_HANDOFF_TOO_MANY_PARTS) {
-		ERROR("BL31: Error too many partitions %d.\n", ret);
+		ERROR("BL31: Error too many partitions %u\n", ret);
 	} else if (ret != FSBL_HANDOFF_SUCCESS) {
 		panic();
 	} else {
-		INFO("BL31: fsbl-atf handover success %d.\n", ret);
+		INFO("BL31: fsbl-atf handover success %u\n", ret);
 	}
 
 	NOTICE("BL31: Secure code at 0x%lx\n", bl32_image_ep_info.pc);
@@ -143,17 +146,19 @@ static versal_intr_info_type_el3_t type_el3_interrupt_table[MAX_INTR_EL3];
 
 int request_intr_type_el3(uint32_t id, interrupt_type_handler_t handler)
 {
-	static uint32_t index = 0;
+	static uint32_t index;
 	uint32_t i;
 
 	/* Validate 'handler' and 'id' parameters */
-	if (handler == NULL || index >= MAX_INTR_EL3)
+	if (handler == NULL || index >= MAX_INTR_EL3) {
 		return -EINVAL;
+	}
 
 	/* Check if a handler has already been registered */
 	for (i = 0; i < index; i++) {
-		if (id == type_el3_interrupt_table[i].id)
+		if (id == type_el3_interrupt_table[i].id) {
 			return -EALREADY;
+		}
 	}
 
 	type_el3_interrupt_table[index].id = id;
@@ -179,8 +184,9 @@ static uint64_t rdo_el3_interrupt_handler(uint32_t id, uint32_t flags,
 		}
 	}
 
-	if (handler != NULL)
-		handler(intr_id, flags, handle, cookie);
+	if (handler != NULL) {
+		return handler(intr_id, flags, handle, cookie);
+	}
 
 	return 0;
 }

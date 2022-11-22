@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2022, Xilinx, Inc. All rights reserved.
+ * Copyright (C) 2022, Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -10,18 +11,20 @@
  */
 
 #include <assert.h>
-#include <plat_ipi.h>
-#include <platform_def.h>
-#include <versal_net_def.h>
+
+#include <drivers/arm/gic_common.h>
+#include <drivers/arm/gicv3.h>
 #include <lib/bakery_lock.h>
 #include <lib/mmio.h>
+#include <lib/mmio.h>
 #include <lib/utils.h>
-#include <drivers/arm/gicv3.h>
-#include <drivers/arm/gic_common.h>
 #include <plat/common/platform.h>
+
+#include <plat_ipi.h>
+#include <platform_def.h>
 #include "pm_api_sys.h"
 #include "pm_client.h"
-#include <lib/mmio.h>
+#include <versal_net_def.h>
 
 #define UNDEFINED_CPUID		(~0)
 
@@ -150,6 +153,7 @@ void pm_client_suspend(const struct pm_proc *proc, uint32_t state)
 {
 	uint32_t cpu_id = plat_my_core_pos();
 	uintptr_t val;
+
 	bakery_lock_get(&pm_client_secure_lock);
 
 	/* TODO: Set wakeup source */

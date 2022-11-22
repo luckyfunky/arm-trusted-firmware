@@ -1,4 +1,4 @@
-SPMC threat model
+SPMC Threat Model
 *****************
 
 ************************
@@ -36,7 +36,8 @@ The scope for this threat model is:
   running in the secure world of TrustZone (at S-EL2 exception level).
   The threat model is not related to the normal world Hypervisor or VMs.
   The S-EL1 SPMC solution is not covered.
-- The implementation complies with the FF-A v1.0 specification.
+- The implementation complies with the FF-A v1.0 specification, and a few
+  features of FF-A v1.1 specification.
 - Secure partitions are statically provisioned at boot time.
 - Focus on the run-time part of the life-cycle (no specific emphasis on boot
   time, factory firmware provisioning, firmware udpate etc.)
@@ -257,7 +258,7 @@ element of the data flow diagram.
 |                        | invocations.                                       |
 |                        | This can also be an endpoint emitting              |
 |                        | FF-A function invocations to another endpoint while|
-|                        | the latter in not in a state to receive it (e.g. a |
+|                        | the latter is not in a state to receive it (e.g. a |
 |                        | SP sends a direct request to the normal world early|
 |                        | while the normal world is not booted yet).         |
 |                        | - the SPMC state itself by employing unexpected    |
@@ -285,14 +286,12 @@ element of the data flow diagram.
 +------------------------+------------------+-----------------+---------------+
 | ``Total Risk Rating``  | High (12)        | High (12)       |               |
 +------------------------+------------------+-----------------+---------------+
-| ``Mitigations``        | The SPMC may be vulnerable to invalid state        |
-|                        | transitions for itself or while handling an SP     |
-|                        | state. The FF-A v1.1 specification provides a      |
-|                        | guidance on those state transitions (run-time      |
-|                        | model). The TF-A SPMC will be hardened in future   |
-|                        | releases to follow this guidance.                  |
-|                        | Additionally The TF-A SPMC mitigates the threat by |
-|                        | runs of the Arm `FF-A ACS`_ compliance test suite. |
+| ``Mitigations``        | The TF-A SPMC provides mitigation against such     |
+|                        | threat by following the guidance for partition     |
+|                        | runtime models as described in FF-A v1.1 EAC0 spec.|
+|                        | The SPMC performs numerous checks in runtime to    |
+|                        | prevent illegal state transitions by adhering to   |
+|                        | the partition runtime model.                       |
 +------------------------+----------------------------------------------------+
 
 +------------------------+----------------------------------------------------+
@@ -477,13 +476,15 @@ element of the data flow diagram.
 +------------------------+------------------+---------------+-----------------+
 | ``Total Risk Rating``  | Medium (6)       | Medium (6)    |                 |
 +------------------------+------------------+---------------+-----------------+
-| ``Mitigations``        | For the specific case of direct requests targetting|
+| ``Mitigations``        | For the specific case of direct requests targeting |
 |                        | the SPMC, the latter is hardened to prevent        |
 |                        | its internal state or the state of an SP to be     |
 |                        | revealed through a direct message response.        |
-|                        | Further FF-A v1.1 guidance about run time models   |
-|                        | and partition states will be implemented in future |
-|                        | TF-A SPMC releases.                                |
+|                        | Further, SPMC performs numerous checks in runtime  |
+|                        | on the basis of the rules established by partition |
+|                        | runtime models to stop  any malicious attempts by  |
+|                        | an endpoint to extract internal state of another   |
+|                        | endpoint.                                          |
 +------------------------+----------------------------------------------------+
 
 +------------------------+----------------------------------------------------+
@@ -572,7 +573,7 @@ element of the data flow diagram.
 | ID                     | 11                                                 |
 +========================+====================================================+
 | ``Threat``             | **A malicious endpoint may attempt flooding the    |
-|                        | SPMC with requests targetting a service within an  |
+|                        | SPMC with requests targeting a service within an   |
 |                        | endpoint such that it denies another endpoint to   |
 |                        | access this service.**                             |
 |                        | Similarly, the malicious endpoint may target a     |
@@ -607,9 +608,552 @@ element of the data flow diagram.
 |                        | in a limited timeframe.                            |
 +------------------------+----------------------------------------------------+
 
++------------------------+----------------------------------------------------+
+| ID                     | 12                                                 |
++========================+====================================================+
+| ``Threat``             | **A malicious endpoint may attempt to allocate     |
+|                        | notifications bitmaps in the SPMC, through the     |
+|                        | FFA_NOTIFICATION_BITMAP_CREATE.**                  |
+|                        | This might be an attempt to exhaust SPMC's memory, |
+|                        | or to allocate a bitmap for a VM that was not      |
+|                        | intended to receive notifications from SPs. Thus   |
+|                        | creating the possibility for a channel that was not|
+|                        | meant to exist.                                    |
++------------------------+----------------------------------------------------+
+| ``Diagram Elements``   | DF1, DF2, DF3                                      |
++------------------------+----------------------------------------------------+
+| ``Affected TF-A        | SPMC                                               |
+| Components``           |                                                    |
++------------------------+----------------------------------------------------+
+| ``Assets``             | SPMC state                                         |
++------------------------+----------------------------------------------------+
+| ``Threat Agent``       | NS-Endpoint, S-Endpoint                            |
++------------------------+----------------------------------------------------+
+| ``Threat Type``        | Denial of service, Spoofing                        |
++------------------------+------------------+-----------------+---------------+
+| ``Application``        |   ``Server``     |   ``Mobile``    |               |
++------------------------+------------------+-----------------+---------------+
+| ``Impact``             | Medium(3)        | Medium(3)       |               |
++------------------------+------------------+-----------------+---------------+
+| ``Likelihood``         | Medium(3)        | Medium(3)       |               |
++------------------------+------------------+-----------------+---------------+
+| ``Total Risk Rating``  | Medium(9)        | Medium(9)       |               |
++------------------------+------------------+-----------------+---------------+
+| ``Mitigations``        | The TF-A SPMC mitigates this threat by defining a  |
+|                        | a fixed size pool for bitmap allocation.           |
+|                        | It also limits the designated FF-A calls to be used|
+|                        | from NWd endpoints.                                |
+|                        | In the NWd the hypervisor is supposed to limit the |
+|                        | access to the designated FF-A call.                |
++------------------------+----------------------------------------------------+
+
++------------------------+----------------------------------------------------+
+| ID                     | 13                                                 |
++========================+====================================================+
+| ``Threat``             | **A malicious endpoint may attempt to destroy the  |
+|                        | notifications bitmaps in the SPMC, through the     |
+|                        | FFA_NOTIFICATION_BITMAP_DESTROY.**                 |
+|                        | This might be an attempt to tamper with the SPMC   |
+|                        | state such that a partition isn't able to receive  |
+|                        | notifications.                                     |
++------------------------+----------------------------------------------------+
+| ``Diagram Elements``   | DF1, DF2, DF3                                      |
++------------------------+----------------------------------------------------+
+| ``Affected TF-A        | SPMC                                               |
+| Components``           |                                                    |
++------------------------+----------------------------------------------------+
+| ``Assets``             | SPMC state                                         |
++------------------------+----------------------------------------------------+
+| ``Threat Agent``       | NS-Endpoint, S-Endpoint                            |
++------------------------+----------------------------------------------------+
+| ``Threat Type``        | Tampering                                          |
++------------------------+------------------+-----------------+---------------+
+| ``Application``        |   ``Server``     |   ``Mobile``    |               |
++------------------------+------------------+-----------------+---------------+
+| ``Impact``             | Low(2)           | Low(2)          |               |
++------------------------+------------------+-----------------+---------------+
+| ``Likelihood``         | Low(2)           | Low(2)          |               |
++------------------------+------------------+-----------------+---------------+
+| ``Total Risk Rating``  | Low(4)           | Low(4)          |               |
++------------------------+------------------+-----------------+---------------+
+| ``Mitigations``        | The TF-A SPMC mitigates this issue by limiting the |
+|                        | designated FF-A call to be issued by the NWd.      |
+|                        | Also, the notifications bitmap can't be destroyed  |
+|                        | if there are pending notifications.                |
+|                        | In the NWd, the hypervisor must restrict the       |
+|                        | NS-endpoints that can issue the designated call.   |
++------------------------+----------------------------------------------------+
+
++------------------------+----------------------------------------------------+
+| ID                     | 14                                                 |
++========================+====================================================+
+| ``Threat``             | **A malicious endpoint might attempt to give       |
+|                        | permissions to an unintended sender to set         |
+|                        | notifications targeting another receiver using the |
+|                        | FF-A call FFA_NOTIFICATION_BIND.**                 |
+|                        | This might be an attempt to tamper with the SPMC   |
+|                        | state such that an unintended, and possibly        |
+|                        | malicious, communication channel is established.   |
++------------------------+----------------------------------------------------+
+| ``Diagram Elements``   | DF1, DF2, DF3                                      |
++------------------------+----------------------------------------------------+
+| ``Affected TF-A        | SPMC                                               |
+| Components``           |                                                    |
++------------------------+----------------------------------------------------+
+| ``Assets``             | SPMC state                                         |
++------------------------+----------------------------------------------------+
+| ``Threat Agent``       | NS-Endpoint, S-Endpoint                            |
++------------------------+----------------------------------------------------+
+| ``Threat Type``        | Tampering, Spoofing                                |
++------------------------+------------------+-----------------+---------------+
+| ``Application``        |   ``Server``     |   ``Mobile``    |               |
++------------------------+------------------+-----------------+---------------+
+| ``Impact``             | Low(2)           | Low(2)          |               |
++------------------------+------------------+-----------------+---------------+
+| ``Likelihood``         | Medium(3)        | Medium(3)       |               |
++------------------------+------------------+-----------------+---------------+
+| ``Total Risk Rating``  | Medium(6)        | Medium(6)       |               |
++------------------------+------------------+-----------------+---------------+
+| ``Mitigations``        | The TF-A SPMC mitigates this by restricting        |
+|                        | designated FFA_NOTIFICATION_BIND call to be issued |
+|                        | by the receiver only. The receiver is responsible  |
+|                        | for allocating the notifications IDs to one        |
+|                        | specific partition.                                |
+|                        | Also, receivers that are not meant to receive      |
+|                        | notifications, must have notifications receipt     |
+|                        | disabled in the respective partition's manifest.   |
+|                        | As for calls coming from NWd, if the NWd VM has had|
+|                        | its bitmap allocated at initialization, the TF-A   |
+|                        | SPMC can't guarantee this threat won't happen.     |
+|                        | The Hypervisor must mitigate in the NWd, similarly |
+|                        | to SPMC for calls in SWd. Though, if the Hypervisor|
+|                        | has been compromised, the SPMC won't be able to    |
+|                        | mitigate it for calls forwarded from NWd.          |
++------------------------+----------------------------------------------------+
+
++------------------------+----------------------------------------------------+
+| ID                     | 15                                                 |
++========================+====================================================+
+| ``Threat``             | **A malicious partition endpoint might attempt to  |
+|                        | set notifications that are not bound to it.**      |
++------------------------+----------------------------------------------------+
+| ``Diagram Elements``   | DF1, DF2, DF3                                      |
++------------------------+----------------------------------------------------+
+| ``Affected TF-A        | SPMC                                               |
+| Components``           |                                                    |
++------------------------+----------------------------------------------------+
+| ``Assets``             | SPMC state                                         |
++------------------------+----------------------------------------------------+
+| ``Threat Agent``       | NS-Endpoint, S-Endpoint                            |
++------------------------+----------------------------------------------------+
+| ``Threat Type``        | Spoofing                                           |
++------------------------+------------------+-----------------+---------------+
+| ``Application``        |   ``Server``     |   ``Mobile``    |               |
++------------------------+------------------+-----------------+---------------+
+| ``Impact``             | Low(2)           | Low(2)          |               |
++------------------------+------------------+-----------------+---------------+
+| ``Likelihood``         | Low(2)           | Low(2)          |               |
++------------------------+------------------+-----------------+---------------+
+| ``Total Risk Rating``  | Low(4)           | Low(4)          |               |
++------------------------+------------------+-----------------+---------------+
+| ``Mitigations``        | The TF-A SPMC mitigates this by checking the       |
+|                        | sender's ID provided in the input to the call      |
+|                        | FFA_NOTIFICATION_SET. The SPMC keeps track of which|
+|                        | notifications are bound to which sender, for a     |
+|                        | given receiver. If the sender is an SP, the        |
+|                        | provided sender ID must match the ID of the        |
+|                        | currently running partition.                       |
++------------------------+----------------------------------------------------+
+
++------------------------+----------------------------------------------------+
+| ID                     | 16                                                 |
++========================+====================================================+
+| ``Threat``             | **A malicious partition endpoint might attempt to  |
+|                        | get notifications that are not targeted to it.**   |
++------------------------+----------------------------------------------------+
+| ``Diagram Elements``   | DF1, DF2, DF3                                      |
++------------------------+----------------------------------------------------+
+| ``Affected TF-A        | SPMC                                               |
+| Components``           |                                                    |
++------------------------+----------------------------------------------------+
+| ``Assets``             | SPMC state                                         |
++------------------------+----------------------------------------------------+
+| ``Threat Agent``       | NS-Endpoint, S-Endpoint                            |
++------------------------+----------------------------------------------------+
+| ``Threat Type``        | Spoofing                                           |
++------------------------+------------------+-----------------+---------------+
+| ``Application``        |   ``Server``     |   ``Mobile``    |               |
++------------------------+------------------+-----------------+---------------+
+| ``Impact``             | Informational(1) | Informational(1)|               |
++------------------------+------------------+-----------------+---------------+
+| ``Likelihood``         | Low(2)           | Low(2)          |               |
++------------------------+------------------+-----------------+---------------+
+| ``Total Risk Rating``  | Low(2)           | Low(2)          |               |
++------------------------+------------------+-----------------+---------------+
+| ``Mitigations``        | The TF-A SPMC mitigates this by checking the       |
+|                        | receiver's ID provided in the input to the call    |
+|                        | FFA_NOTIFICATION_GET. The SPMC keeps track of which|
+|                        | notifications are pending for each receiver.       |
+|                        | The provided receiver ID must match the ID of the  |
+|                        | currently running partition, if it is an SP.       |
+|                        | For calls forwarded from NWd, the SPMC will return |
+|                        | the pending notifications if the receiver had its  |
+|                        | bitmap created, and has pending notifications.     |
+|                        | If Hypervisor or OS kernel are compromised, the    |
+|                        | SPMC won't be able to mitigate calls from rogue NWd|
+|                        | endpoints.                                         |
++------------------------+----------------------------------------------------+
+
++------------------------+----------------------------------------------------+
+| ID                     | 17                                                 |
++========================+====================================================+
+| ``Threat``             | **A malicious partition endpoint might attempt to  |
+|                        | get the information about pending notifications,   |
+|                        | through the FFA_NOTIFICATION_INFO_GET call.**      |
+|                        | This call is meant to be used by the NWd FF-A      |
+|                        | driver.                                            |
++------------------------+----------------------------------------------------+
+| ``Diagram Elements``   | DF1, DF2, DF3                                      |
++------------------------+----------------------------------------------------+
+| ``Affected TF-A        | SPMC                                               |
+| Components``           |                                                    |
++------------------------+----------------------------------------------------+
+| ``Assets``             | SPMC state                                         |
++------------------------+----------------------------------------------------+
+| ``Threat Agent``       | NS-Endpoint, S-Endpoint                            |
++------------------------+----------------------------------------------------+
+| ``Threat Type``        | Information disclosure                             |
++------------------------+------------------+-----------------+---------------+
+| ``Application``        |   ``Server``     |   ``Mobile``    |               |
++------------------------+------------------+-----------------+---------------+
+| ``Impact``             | Low(2)           | Low(2)          |               |
++------------------------+------------------+-----------------+---------------+
+| ``Likelihood``         | Medium(3)        | Medium(3)       |               |
++------------------------+------------------+-----------------+---------------+
+| ``Total Risk Rating``  | Medium(6)        | Medium(6)       |               |
++------------------------+------------------+-----------------+---------------+
+| ``Mitigations``        | The TF-A SPMC mitigates this by returning error to |
+|                        | calls made by SPs to FFA_NOTIFICATION_INFO_GET.    |
+|                        | If Hypervisor or OS kernel are compromised, the    |
+|                        | SPMC won't be able mitigate calls from rogue NWd   |
+|                        | endpoints.                                         |
++------------------------+----------------------------------------------------+
+
++------------------------+----------------------------------------------------+
+| ID                     | 18                                                 |
++========================+====================================================+
+| ``Threat``             | **A malicious partition endpoint might attempt to  |
+|                        | flood another partition endpoint with notifications|
+|                        | hindering its operation.**                         |
+|                        | The intent of the malicious endpoint could be to   |
+|                        | interfere with both the receiver's and/or primary  |
+|                        | endpoint execution, as they can both be preempted  |
+|                        | by the NPI and SRI, respectively.                  |
++------------------------+----------------------------------------------------+
+| ``Diagram Elements``   | DF1, DF2, DF3, DF4                                 |
++------------------------+----------------------------------------------------+
+| ``Affected TF-A        | SPMC                                               |
+| Components``           |                                                    |
++------------------------+----------------------------------------------------+
+| ``Assets``             | SPMC state, SP state, CPU cycles                   |
++------------------------+----------------------------------------------------+
+| ``Threat Agent``       | NS-Endpoint, S-Endpoint                            |
++------------------------+----------------------------------------------------+
+| ``Threat Type``        | DoS                                                |
++------------------------+------------------+-----------------+---------------+
+| ``Application``        |   ``Server``     |   ``Mobile``    |               |
++------------------------+------------------+-----------------+---------------+
+| ``Impact``             | Low(2)           | Low(2)          |               |
++------------------------+------------------+-----------------+---------------+
+| ``Likelihood``         | Medium(3)        | Medium(3)       |               |
++------------------------+------------------+-----------------+---------------+
+| ``Total Risk Rating``  | Medium(6)        | Medium(6)       |               |
++------------------------+------------------+-----------------+---------------+
+| ``Mitigations``        | The TF-A SPMC does not mitigate this threat.       |
+|                        | However, the impact is limited due to the          |
+|                        | architecture:                                      |
+|                        | - Notifications are not queued, one that has been  |
+|                        | signaled needs to be retrieved by the receiver,    |
+|                        | until it can be sent again.                        |
+|                        | - Both SRI and NPI can't be pended until handled   |
+|                        | which limits the amount of spurious interrupts.    |
+|                        | - A given receiver could only bind a maximum number|
+|                        | of notifications to a given sender, within a given |
+|                        | execution context.                                 |
++------------------------+----------------------------------------------------+
+
++------------------------+----------------------------------------------------+
+| ID                     | 19                                                 |
++========================+====================================================+
+| ``Threat``             | **A malicious endpoint may abuse FFA_RUN call to   |
+|                        | resume or turn on other endpoint execution         |
+|                        | contexts, attempting to alter the internal state of|
+|                        | SPMC and SPs, potentially leading to illegal state |
+|                        | transitions and deadlocks.**                       |
+|                        | An endpoint can call into another endpoint         |
+|                        | execution context using FFA_MSG_SEND_DIRECT_REQ    |
+|                        | ABI to create a call chain. A malicious endpoint   |
+|                        | could abuse this to form loops in a call chain that|
+|                        | could lead to potential deadlocks.                 |
++------------------------+----------------------------------------------------+
+| ``Diagram Elements``   | DF1, DF2, DF4                                      |
++------------------------+----------------------------------------------------+
+| ``Affected TF-A        | SPMC, SPMD                                         |
+| Components``           |                                                    |
++------------------------+----------------------------------------------------+
+| ``Assets``             | SPMC state, SP state, Scheduling cycles            |
++------------------------+----------------------------------------------------+
+| ``Threat Agent``       | NS-Endpoint, S-Endpoint                            |
++------------------------+----------------------------------------------------+
+| ``Threat Type``        | Tampering, Denial of Service                       |
++------------------------+------------------+-----------------+---------------+
+| ``Application``        |   ``Server``     |   ``Mobile``    |               |
++------------------------+------------------+-----------------+---------------+
+| ``Impact``             | Medium (3)       | Medium (3)      |               |
++------------------------+------------------+-----------------+---------------+
+| ``Likelihood``         | Medium (3)       | Medium (3)      |               |
++------------------------+------------------+-----------------+---------------+
+| ``Total Risk Rating``  | Medium (9)       | Medium (9)      |               |
++------------------------+------------------+-----------------+---------------+
+| ``Mitigations``        | The TF-A SPMC provides mitigation against such     |
+|                        | threats by following the guidance for partition    |
+|                        | runtime models as described in FF-A v1.1 EAC0 spec.|
+|                        | The SPMC performs numerous checks in runtime to    |
+|                        | prevent illegal state transitions by adhering to   |
+|                        | the partition runtime model. Further, if the       |
+|                        | receiver endpoint is a predecessor of current      |
+|                        | endpoint in the present call chain, the SPMC denies|
+|                        | any attempts to form loops by returning FFA_DENIED |
+|                        | error code. Only the primary scheduler is allowed  |
+|                        | to turn on execution contexts of other partitions  |
+|                        | though SPMC does not have the ability to           |
+|                        | scrutinize its identity. Secure partitions have    |
+|                        | limited ability to resume execution contexts of    |
+|                        | other partitions based on the runtime model. Such  |
+|                        | attempts cannot compromise the integrity of the    |
+|                        | SPMC.                                              |
++------------------------+----------------------------------------------------+
+
++------------------------+----------------------------------------------------+
+| ID                     | 20                                                 |
++========================+====================================================+
+| ``Threat``             | **A malicious endpoint can perform a               |
+|                        | denial-of-service attack by using FFA_INTERRUPT    |
+|                        | call that could attempt to cause the system to     |
+|                        | crash or enter into an unknown state as no physical|
+|                        | interrupt could be pending for it to be handled in |
+|                        | the SPMC.**                                        |
++------------------------+----------------------------------------------------+
+| ``Diagram Elements``   | DF1, DF2, DF5                                      |
++------------------------+----------------------------------------------------+
+| ``Affected TF-A        | SPMC, SPMD                                         |
+| Components``           |                                                    |
++------------------------+----------------------------------------------------+
+| ``Assets``             | SPMC state, SP state, Scheduling cycles            |
++------------------------+----------------------------------------------------+
+| ``Threat Agent``       | NS-Endpoint, S-Endpoint                            |
++------------------------+----------------------------------------------------+
+| ``Threat Type``        | Tampering, Denial of Service                       |
++------------------------+------------------+-----------------+---------------+
+| ``Application``        |   ``Server``     |   ``Mobile``    |               |
++------------------------+------------------+-----------------+---------------+
+| ``Impact``             | Medium (3)       | Medium (3)      |               |
++------------------------+------------------+-----------------+---------------+
+| ``Likelihood``         | Medium (3)       | Medium (3)      |               |
++------------------------+------------------+-----------------+---------------+
+| ``Total Risk Rating``  | Medium (9)       | Medium (9)      |               |
++------------------------+------------------+-----------------+---------------+
+| ``Mitigations``        | The TF-A SPMC provides mitigation against such     |
+|                        | attack by detecting invocations from partitions    |
+|                        | and simply returning FFA_ERROR status interface.   |
+|                        | SPMC only allows SPMD to use FFA_INTERRUPT ABI to  |
+|                        | communicate a pending secure interrupt triggered   |
+|                        | while execution was in normal world.               |
++------------------------+----------------------------------------------------+
+
++------------------------+----------------------------------------------------+
+| ID                     | 21                                                 |
++========================+====================================================+
+| ``Threat``             | **A malicious secure endpoint might deactivate a   |
+|                        | (virtual) secure interrupt that was not originally |
+|                        | signaled by SPMC, thereby attempting to alter the  |
+|                        | state of the SPMC and potentially lead to system   |
+|                        | crash.**                                           |
+|                        | SPMC maps the virtual interrupt ids to the physical|
+|                        | interrupt ids to keep the implementation of virtual|
+|                        | interrupt driver simple.                           |
+|                        | Similarly, a malicious secure endpoint might invoke|
+|                        | the deactivation ABI more than once for a secure   |
+|                        | interrupt. Moreover, a malicious secure endpoint   |
+|                        | might attempt to deactivate a (virtual) secure     |
+|                        | interrupt that was signaled to another endpoint    |
+|                        | execution context by the SPMC even before secure   |
+|                        | interrupt was handled.                             |
++------------------------+----------------------------------------------------+
+| ``Diagram Elements``   | DF1, DF5                                           |
++------------------------+----------------------------------------------------+
+| ``Affected TF-A        | SPMC                                               |
+| Components``           |                                                    |
++------------------------+----------------------------------------------------+
+| ``Assets``             | SPMC state, SP state                               |
++------------------------+----------------------------------------------------+
+| ``Threat Agent``       | S-Endpoint                                         |
++------------------------+----------------------------------------------------+
+| ``Threat Type``        | Tampering                                          |
++------------------------+------------------+-----------------+---------------+
+| ``Application``        |   ``Server``     |   ``Mobile``    |               |
++------------------------+------------------+-----------------+---------------+
+| ``Impact``             | Medium (3)       | Medium (3)      |               |
++------------------------+------------------+-----------------+---------------+
+| ``Likelihood``         | Medium (3)       | Medium (3)      |               |
++------------------------+------------------+-----------------+---------------+
+| ``Total Risk Rating``  | Medium (9)       | Medium (9)      |               |
++------------------------+------------------+-----------------+---------------+
+| ``Mitigations``        | At initialization, the TF-A SPMC parses the        |
+|                        | partition manifests to find the target execution   |
+|                        | context responsible for handling the various       |
+|                        | secure physical interrupts. The TF-A SPMC provides |
+|                        | mitigation against above mentioned threats by:     |
+|                        |                                                    |
+|                        | - Keeping track of each pending virtual interrupt  |
+|                        |   signaled to an execution context of a secure     |
+|                        |   secure partition.                                |
+|                        | - Denying any deactivation call from SP if there is|
+|                        |   no pending physical interrupt  mapped to the     |
+|                        |   given virtual interrupt.                         |
+|                        | - Denying any deactivation call from SP if the     |
+|                        |   virtual interrupt has not been signaled to the   |
+|                        |   current execution context.                       |
++------------------------+----------------------------------------------------+
+
++------------------------+----------------------------------------------------+
+| ID                     | 22                                                 |
++========================+====================================================+
+| ``Threat``             | **A malicious secure endpoint might not deactivate |
+|                        | a virtual interrupt signaled to it by the SPMC but |
+|                        | perform secure interrupt signal completion. This   |
+|                        | attempt to corrupt the internal state of the SPMC  |
+|                        | could lead to an unknown state and further lead to |
+|                        | system crash.**                                    |
+|                        | Similarly, a malicious secure endpoint could       |
+|                        | deliberately not perform either interrupt          |
+|                        | deactivation or interrupt completion signal. Since,|
+|                        | the SPMC can only process one secure interrupt at a|
+|                        | time, this could choke the system where all        |
+|                        | interrupts are indefinitely masked which could     |
+|                        | potentially lead to system crash or reboot.        |
++------------------------+----------------------------------------------------+
+| ``Diagram Elements``   | DF1, DF5                                           |
++------------------------+----------------------------------------------------+
+| ``Affected TF-A        | SPMC                                               |
+| Components``           |                                                    |
++------------------------+----------------------------------------------------+
+| ``Assets``             | SPMC state, SP state, Scheduling cycles            |
++------------------------+----------------------------------------------------+
+| ``Threat Agent``       | S-Endpoint                                         |
++------------------------+----------------------------------------------------+
+| ``Threat Type``        | Tampering, Denial of Service                       |
++------------------------+------------------+-----------------+---------------+
+| ``Application``        |   ``Server``     |   ``Mobile``    |               |
++------------------------+------------------+-----------------+---------------+
+| ``Impact``             | Medium (3)       | Medium (3)      |               |
++------------------------+------------------+-----------------+---------------+
+| ``Likelihood``         | Medium (3)       | Medium (3)      |               |
++------------------------+------------------+-----------------+---------------+
+| ``Total Risk Rating``  | Medium (9)       | Medium (9)      |               |
++------------------------+------------------+-----------------+---------------+
+| ``Mitigations``        | The TF-A SPMC does not provide mitigation against  |
+|                        | such threat. This is a limitation of the current   |
+|                        | SPMC implementation and needs to be handled in the |
+|                        | future releases.                                   |
++------------------------+----------------------------------------------------+
+
++------------------------+----------------------------------------------------+
+| ID                     | 23                                                 |
++========================+====================================================+
+| ``Threat``             | **A malicious endpoint could leverage non-secure   |
+|                        | interrupts to preempt a secure endpoint, thereby   |
+|                        | attempting to render it unable to handle a secure  |
+|                        | virtual interrupt targetted for it. This could lead|
+|                        | to priority inversion as secure virtual interrupts |
+|                        | are kept pending while non-secure interrupts are   |
+|                        | handled by normal world VMs.**                     |
++------------------------+----------------------------------------------------+
+| ``Diagram Elements``   | DF1, DF2, DF3, DF5                                 |
++------------------------+----------------------------------------------------+
+| ``Affected TF-A        | SPMC, SPMD                                         |
+| Components``           |                                                    |
++------------------------+----------------------------------------------------+
+| ``Assets``             | SPMC state, SP state, Scheduling cycles            |
++------------------------+----------------------------------------------------+
+| ``Threat Agent``       | NS-Endpoint                                        |
++------------------------+----------------------------------------------------+
+| ``Threat Type``        | Denial of Service                                  |
++------------------------+------------------+-----------------+---------------+
+| ``Application``        |   ``Server``     |   ``Mobile``    |               |
++------------------------+------------------+-----------------+---------------+
+| ``Impact``             | Medium (3)       | Medium (3)      |               |
++------------------------+------------------+-----------------+---------------+
+| ``Likelihood``         | Medium (3)       | Medium (3)      |               |
++------------------------+------------------+-----------------+---------------+
+| ``Total Risk Rating``  | Medium (9)       | Medium (9)      |               |
++------------------------+------------------+-----------------+---------------+
+| ``Mitigations``        | The TF-A SPMC alone does not provide mitigation    |
+|                        | against such threats. System integrators must take |
+|                        | necessary high level design decisions that takes   |
+|                        | care of interrupt prioritization. The SPMC performs|
+|                        | its role of enabling SPs to specify appropriate    |
+|                        | action towards non-secure interrupt with the help  |
+|                        | of partition manifest based on the guidance in the |
+|                        | FF-A v1.1 EAC0 specification.                      |
++------------------------+----------------------------------------------------+
+
++------------------------+----------------------------------------------------+
+| ID                     | 24                                                 |
++========================+====================================================+
+| ``Threat``             | **A secure endpoint depends on primary scheduler   |
+|                        | for CPU cycles. A malicious endpoint could delay   |
+|                        | the secure endpoint from being scheduled. Secure   |
+|                        | interrupts, if not handled timely, could compromise|
+|                        | the state of SP and SPMC, thereby rendering the    |
+|                        | system unresponsive.**                             |
++------------------------+----------------------------------------------------+
+| ``Diagram Elements``   | DF1, DF2, DF3, DF5                                 |
++------------------------+----------------------------------------------------+
+| ``Affected TF-A        | SPMC, SPMD                                         |
+| Components``           |                                                    |
++------------------------+----------------------------------------------------+
+| ``Assets``             | SPMC state, SP state, Scheduling cycles            |
++------------------------+----------------------------------------------------+
+| ``Threat Agent``       | NS-Endpoint                                        |
++------------------------+----------------------------------------------------+
+| ``Threat Type``        | Denial of Service                                  |
++------------------------+------------------+-----------------+---------------+
+| ``Application``        |   ``Server``     |   ``Mobile``    |               |
++------------------------+------------------+-----------------+---------------+
+| ``Impact``             | Medium (3)       | Medium (3)      |               |
++------------------------+------------------+-----------------+---------------+
+| ``Likelihood``         | Medium (3)       | Medium (3)      |               |
++------------------------+------------------+-----------------+---------------+
+| ``Total Risk Rating``  | Medium (9)       | Medium (9)      |               |
++------------------------+------------------+-----------------+---------------+
+| ``Mitigations``        | The TF-A SPMC does not provide full mitigation     |
+|                        | against such threats. However, based on the        |
+|                        | guidance provided in the FF-A v1.1 EAC0 spec, SPMC |
+|                        | provisions CPU cycles to run a secure endpoint     |
+|                        | execution context in SPMC schedule mode which      |
+|                        | cannot be preempted by a non-secure interrupt.     |
+|                        | This reduces the dependency on primary scheduler   |
+|                        | for cycle allocation. Moreover, all further        |
+|                        | interrupts are masked until pending secure virtual |
+|                        | interrupt on current CPU is handled. This allows SP|
+|                        | execution context to make progress even upon being |
+|                        | interrupted.                                       |
++------------------------+----------------------------------------------------+
+
 --------------
 
-*Copyright (c) 2021, Arm Limited. All rights reserved.*
+*Copyright (c) 2021-2022, Arm Limited. All rights reserved.*
 
 .. _Arm Firmware Framework for Arm A-profile: https://developer.arm.com/docs/den0077/latest
 .. _Secure Partition Manager: ../components/secure-partition-manager.html

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021, ARM Limited and Contributors. All rights reserved.
+ * Portions copyright (c) 2021-2022, ProvenRun S.A.S. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */

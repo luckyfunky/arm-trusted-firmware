@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2015-2021, ARM Limited and Contributors. All rights reserved.
+ * Copyright (c) 2015-2018, ARM Limited and Contributors. All rights reserved.
+ * Portions copyright (c) 2021-2022, ProvenRun S.A.S. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -249,7 +250,7 @@ void plat_ic_raise_el3_sgi(int sgi_num, u_register_t target)
 	/* Verify that this is a secure SGI */
 	assert(plat_ic_get_interrupt_type(sgi_num) == INTR_TYPE_EL3);
 
-	gicv2_raise_sgi(sgi_num, 0, id);
+	gicv2_raise_sgi(sgi_num, false, id);
 #else
 	assert(false);
 #endif
@@ -266,7 +267,7 @@ void plat_ic_raise_ns_sgi(int sgi_num, u_register_t target)
 	/* Verify that this is a non-secure SGI */
 	assert(plat_ic_get_interrupt_type(sgi_num) == INTR_TYPE_NS);
 
-	gicv2_raise_sgi(sgi_num, 1, id);
+	gicv2_raise_sgi(sgi_num, true, id);
 }
 
 void plat_ic_raise_s_el1_sgi(int sgi_num, u_register_t target)
@@ -283,7 +284,7 @@ void plat_ic_raise_s_el1_sgi(int sgi_num, u_register_t target)
 	/* Verify that this is a secure EL1 SGI */
 	assert(plat_ic_get_interrupt_type(sgi_num) == INTR_TYPE_S_EL1);
 
-	gicv2_raise_sgi(sgi_num, 0, id);
+	gicv2_raise_sgi(sgi_num, false, id);
 #endif
 }
 

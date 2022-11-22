@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015-2018, ARM Limited and Contributors. All rights reserved.
+ * Portions copyright (c) 2021-2022, ProvenRun S.A.S. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -8,6 +9,7 @@
 #define GICV2_H
 
 #include <drivers/arm/gic_common.h>
+#include <platform_def.h>
 
 /*******************************************************************************
  * GICv2 miscellaneous definitions
@@ -30,7 +32,14 @@
 #define GICD_SGIR		U(0xF00)
 #define GICD_CPENDSGIR		U(0xF10)
 #define GICD_SPENDSGIR		U(0xF20)
+
+/*
+ * Some GICv2 implementations violate the specification and have this register
+ * at a different address. Allow overriding it in platform_def.h as workaround.
+ */
+#ifndef GICD_PIDR2_GICV2
 #define GICD_PIDR2_GICV2	U(0xFE8)
+#endif
 
 #define ITARGETSR_SHIFT		2
 #define GIC_TARGET_CPU_MASK	U(0xff)
@@ -50,7 +59,7 @@
 #define GICV2_SGIR_VALUE(tgt_lst_flt, tgt, nsatt, intid) \
 	((((tgt_lst_flt) & SGIR_TGTLSTFLT_MASK) << SGIR_TGTLSTFLT_SHIFT) | \
 	 (((tgt) & SGIR_TGTLST_MASK) << SGIR_TGTLST_SHIFT) | \
-	 (nsatt ? SGIR_NSATT : U(0)) | \
+	 ((nsatt) ? SGIR_NSATT : U(0)) | \
 	 ((intid) & SGIR_INTID_MASK))
 
 /*******************************************************************************

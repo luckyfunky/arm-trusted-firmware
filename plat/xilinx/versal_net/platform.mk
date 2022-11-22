@@ -1,9 +1,16 @@
 # Copyright (c) 2018-2022, ARM Limited and Contributors. All rights reserved.
 # Copyright (c) 2021-2022, Xilinx, Inc. All rights reserved.
+# Copyright (C) 2022, Advanced Micro Devices, Inc. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
 PLAT_PATH := plat/xilinx/versal_net
+
+# A78 Erratum for SoC
+ERRATA_A78_AE_1941500 := 1
+ERRATA_A78_AE_1951502 := 1
+ERRATA_A78_AE_2376748 := 1
+ERRATA_A78_AE_2395408 := 1
 
 override PROGRAMMABLE_RESET_ADDRESS := 1
 PSCI_EXTENDED_STATE_ID := 1
@@ -52,7 +59,7 @@ PLAT_INCLUDES		:=	-Iinclude/plat/arm/common/			\
 				-Iplat/xilinx/common/include/			\
 				-Iplat/xilinx/common/ipi_mailbox_service/	\
 				-I${PLAT_PATH}/include/				\
-				-Iplat/xilinx/versal/pm_service/		\
+				-Iplat/xilinx/versal/pm_service/
 
 # Include GICv3 driver files
 include drivers/arm/gic/v3/gicv3.mk

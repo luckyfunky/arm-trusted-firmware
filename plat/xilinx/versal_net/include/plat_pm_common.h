@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2022, Xilinx, Inc. All rights reserved.
+ * Copyright (C) 2022, Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -12,8 +13,10 @@
 #ifndef PLAT_PM_COMMON_H
 #define PLAT_PM_COMMON_H
 
-#include <common/debug.h>
 #include <stdint.h>
+
+#include <common/debug.h>
+
 #include "pm_defs.h"
 
 #define NON_SECURE_FLAG		1U

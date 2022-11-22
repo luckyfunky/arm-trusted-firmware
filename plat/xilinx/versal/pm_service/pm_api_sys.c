@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2019-2021, Xilinx, Inc. All rights reserved.
+ * Copyright (c) 2019-2022, Xilinx, Inc. All rights reserved.
+ * Copyright (c) 2022, Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -18,14 +19,14 @@
 #include "pm_svc_main.h"
 
 /* default shutdown/reboot scope is system(2) */
-static unsigned int pm_shutdown_scope = XPM_SHUTDOWN_SUBTYPE_RST_SYSTEM;
+static uint32_t pm_shutdown_scope = XPM_SHUTDOWN_SUBTYPE_RST_SYSTEM;
 
 /**
  * pm_get_shutdown_scope() - Get the currently set shutdown scope
  *
  * @return	Shutdown scope value
  */
-unsigned int pm_get_shutdown_scope(void)
+uint32_t pm_get_shutdown_scope(void)
 {
 	return pm_shutdown_scope;
 }
@@ -45,14 +46,15 @@ enum pm_ret_status pm_handle_eemi_call(uint32_t flag, uint32_t x0, uint32_t x1,
 				       uint32_t x2, uint32_t x3, uint32_t x4,
 				       uint32_t x5, uint64_t *result)
 {
-	uint32_t payload[PAYLOAD_ARG_CNT];
+	uint32_t payload[PAYLOAD_ARG_CNT] = {0};
 	uint32_t module_id;
 
-	module_id = (x0 & MODULE_ID_MASK) >> 8;
+	module_id = (x0 & MODULE_ID_MASK) >> 8U;
 
 	//default module id is for LIBPM
-	if (module_id == 0)
+	if (module_id == 0) {
 		module_id = LIBPM_MODULE_ID;
+	}
 
 	PM_PACK_PAYLOAD6(payload, module_id, flag, x0, x1, x2, x3, x4, x5);
 	return pm_ipi_send_sync(primary_proc, payload, (uint32_t *)result, PAYLOAD_ARG_CNT);
@@ -73,12 +75,12 @@ enum pm_ret_status pm_handle_eemi_call(uint32_t flag, uint32_t x0, uint32_t x1,
  * @return	Returns status, either success or error+reason
  */
 enum pm_ret_status pm_self_suspend(uint32_t nid,
-				   unsigned int latency,
-				   unsigned int state,
+				   uint32_t latency,
+				   uint32_t state,
 				   uintptr_t address, uint32_t flag)
 {
 	uint32_t payload[PAYLOAD_ARG_CNT];
-	unsigned int cpuid = plat_my_core_pos();
+	uint32_t cpuid = plat_my_core_pos();
 	const struct pm_proc *proc = pm_get_proc(cpuid);
 
 	if (proc == NULL) {
@@ -140,7 +142,7 @@ enum pm_ret_status pm_abort_suspend(enum pm_abort_reason reason, uint32_t flag)
  * @return	Returns status, either success or error+reason
  */
 enum pm_ret_status pm_req_suspend(uint32_t target, uint8_t ack,
-				  unsigned int latency, unsigned int state,
+				  uint32_t latency, uint32_t state,
 				  uint32_t flag)
 {
 	uint32_t payload[PAYLOAD_ARG_CNT];
@@ -400,7 +402,7 @@ enum pm_ret_status pm_query_data(uint32_t qid, uint32_t arg1, uint32_t arg2,
 
 	ret = pm_feature_check(PM_QUERY_DATA, &version[0], flag);
 	if (ret == PM_RET_SUCCESS) {
-		fw_api_version = version[0] & 0xFFFF;
+		fw_api_version = version[0] & 0xFFFFU;
 		if ((fw_api_version == 2U) &&
 		    ((qid == XPM_QID_CLOCK_GET_NAME) ||
 		     (qid == XPM_QID_PINCTRL_GET_FUNCTION_NAME))) {
@@ -442,26 +444,34 @@ enum pm_ret_status pm_api_ioctl(uint32_t device_id, uint32_t ioctl_id,
 				uint32_t arg1, uint32_t arg2, uint32_t arg3,
 				uint32_t *value, uint32_t flag)
 {
-	int ret;
+	enum pm_ret_status ret;
 
 	switch (ioctl_id) {
 	case IOCTL_SET_PLL_FRAC_MODE:
-		return pm_pll_set_mode(arg1, arg2, flag);
+		ret =  pm_pll_set_mode(arg1, arg2, flag);
+		break;
 	case IOCTL_GET_PLL_FRAC_MODE:
-		return pm_pll_get_mode(arg1, value, flag);
+		ret =  pm_pll_get_mode(arg1, value, flag);
+		break;
 	case IOCTL_SET_PLL_FRAC_DATA:
-		return pm_pll_set_param(arg1, PM_PLL_PARAM_DATA, arg2, flag);
+		ret =  pm_pll_set_param(arg1, PM_PLL_PARAM_DATA, arg2, flag);
+		break;
 	case IOCTL_GET_PLL_FRAC_DATA:
-		return pm_pll_get_param(arg1, PM_PLL_PARAM_DATA, value, flag);
+		ret =  pm_pll_get_param(arg1, PM_PLL_PARAM_DATA, value, flag);
+		break;
 	case IOCTL_SET_SGI:
 		/* Get the sgi number */
 		ret = pm_register_sgi(arg1, arg2);
-		if (ret)
+		if (ret != 0) {
 			return PM_RET_ERROR_ARGS;
-		return PM_RET_SUCCESS;
+		}
+		ret = PM_RET_SUCCESS;
+		break;
 	default:
 		return PM_RET_ERROR_NOTSUPPORTED;
 	}
+
+	return ret;
 }
 
 /**
@@ -514,7 +524,7 @@ enum pm_ret_status pm_feature_check(uint32_t api_id, uint32_t *ret_payload,
 		break;
 	}
 
-	module_id = (api_id & MODULE_ID_MASK) >> 8;
+	module_id = (api_id & MODULE_ID_MASK) >> 8U;
 
 	/*
 	 * feature check should be done only for LIBPM module

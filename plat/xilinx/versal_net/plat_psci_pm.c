@@ -1,22 +1,25 @@
 /*
  * Copyright (c) 2022, Xilinx, Inc. All rights reserved.
+ * Copyright (C) 2022, Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
 #include <assert.h>
-#include <plat_arm.h>
-#include <plat_private.h>
+
 #include <common/debug.h>
 #include <lib/mmio.h>
 #include <lib/psci/psci.h>
-#include <plat/common/platform.h>
 #include <plat/arm/common/plat_arm.h>
-#include <pm_common.h>
-#include "versal_net_def.h"
+#include <plat/common/platform.h>
+#include <plat_arm.h>
+
+#include <plat_private.h>
 #include "pm_api_sys.h"
-#include "pm_svc_main.h"
 #include "pm_client.h"
+#include <pm_common.h>
+#include "pm_svc_main.h"
+#include "versal_net_def.h"
 
 static uintptr_t versal_net_sec_entry;
 
@@ -188,7 +191,7 @@ static void __dead2 versal_net_system_off(void)
  * @return Returns status, either PSCI_E_SUCCESS or reason
  */
 static int32_t versal_net_validate_power_state(unsigned int power_state,
-				   psci_power_state_t *req_state)
+					       psci_power_state_t *req_state)
 {
 	VERBOSE("%s: power_state: 0x%x\n", __func__, power_state);
 
@@ -238,7 +241,7 @@ static const struct plat_psci_ops versal_net_nopmc_psci_ops = {
  * Export the platform specific power ops.
  ******************************************************************************/
 int32_t plat_setup_psci_ops(uintptr_t sec_entrypoint,
-			const struct plat_psci_ops **psci_ops)
+			    const struct plat_psci_ops **psci_ops)
 {
 	versal_net_sec_entry = sec_entrypoint;
 
@@ -254,8 +257,8 @@ int32_t sip_svc_setup_init(void)
 	return pm_setup();
 }
 
-uint64_t smc_handler(uint32_t smc_fid, uint64_t x1, uint64_t x2, uint64_t x3, uint64_t x4, void *cookie,
-		void *handle, uint64_t flags)
+uint64_t smc_handler(uint32_t smc_fid, uint64_t x1, uint64_t x2, uint64_t x3, uint64_t x4,
+		     void *cookie, void *handle, uint64_t flags)
 {
 	return pm_smc_handler(smc_fid, x1, x2, x3, x4, cookie, handle, flags);
 }

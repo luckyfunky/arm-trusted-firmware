@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021, ARM Limited and Contributors. All rights reserved.
+ * Copyright (c) 2015-2022, ARM Limited and Contributors. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -18,7 +18,6 @@
 #include <drivers/generic_delay_timer.h>
 #include <drivers/st/bsec.h>
 #include <drivers/st/etzpc.h>
-#include <drivers/st/stm32_console.h>
 #include <drivers/st/stm32_gpio.h>
 #include <drivers/st/stm32_iwdg.h>
 #include <drivers/st/stm32mp1_clk.h>
@@ -36,13 +35,13 @@
  ******************************************************************************/
 static entry_point_info_t bl33_image_ep_info;
 
-static console_t console;
-
 /*******************************************************************************
  * Interrupt handler for FIQ (secure IRQ)
  ******************************************************************************/
 void sp_min_plat_fiq_handler(uint32_t id)
 {
+	(void)plat_crash_console_init();
+
 	switch (id & INT_ID_MASK) {
 	case STM32MP1_IRQ_TZC400:
 		tzc400_init(STM32MP1_TZC_BASE);
@@ -54,7 +53,7 @@ void sp_min_plat_fiq_handler(uint32_t id)
 		panic();
 		break;
 	default:
-		ERROR("SECURE IT handler not define for it : %u", id);
+		ERROR("SECURE IT handler not define for it : %u\n", id);
 		break;
 	}
 }
@@ -115,14 +114,10 @@ static void stm32mp1_etzpc_early_setup(void)
 void sp_min_early_platform_setup2(u_register_t arg0, u_register_t arg1,
 				  u_register_t arg2, u_register_t arg3)
 {
-	struct dt_node_info dt_uart_info;
-	int result;
 	bl_params_t *params_from_bl2 = (bl_params_t *)arg0;
-#if STM32MP_USE_STM32IMAGE
-	uintptr_t dt_addr = STM32MP_DTB_BASE;
-#else
 	uintptr_t dt_addr = arg1;
-#endif
+
+	stm32mp_setup_early_console();
 
 	/* Imprecise aborts can be masked in NonSecure */
 	write_scr(read_scr() | SCR_AW_BIT);
@@ -174,24 +169,7 @@ void sp_min_early_platform_setup2(u_register_t arg0, u_register_t arg1,
 		panic();
 	}
 
-	result = dt_get_stdout_uart_info(&dt_uart_info);
-
-	if ((result > 0) && (dt_uart_info.status != 0U)) {
-		unsigned int console_flags;
-
-		if (console_stm32_register(dt_uart_info.base, 0,
-					   STM32MP_UART_BAUDRATE, &console) ==
-		    0) {
-			panic();
-		}
-
-		console_flags = CONSOLE_FLAG_BOOT | CONSOLE_FLAG_CRASH |
-			CONSOLE_FLAG_TRANSLATE_CRLF;
-#ifdef DEBUG
-		console_flags |= CONSOLE_FLAG_RUNTIME;
-#endif
-		console_set_scope(&console, console_flags);
-	}
+	(void)stm32mp_uart_console_setup();
 
 	stm32mp1_etzpc_early_setup();
 }

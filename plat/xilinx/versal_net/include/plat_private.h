@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2018-2019, ARM Limited and Contributors. All rights reserved.
  * Copyright (c) 2021-2022, Xilinx, Inc. All rights reserved.
+ * Copyright (C) 2022, Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -8,8 +9,8 @@
 #ifndef PLAT_PRIVATE_H
 #define PLAT_PRIVATE_H
 
-#include <lib/xlat_tables/xlat_tables_v2.h>
 #include <bl31/interrupt_mgmt.h>
+#include <lib/xlat_tables/xlat_tables_v2.h>
 
 typedef struct versal_intr_info_type_el3 {
 	uint32_t id;
@@ -42,8 +43,7 @@ int32_t sip_svc_setup_init(void);
  */
 int request_intr_type_el3(uint32_t irq, interrupt_type_handler_t fiq_handler);
 
-#define PM_IOCTL			34U
-#define PM_GET_CHIPID			24U
-#define IOCTL_OSPI_MUX_SELECT		21U
+#define PM_GET_CHIPID			(24U)
+#define IOCTL_OSPI_MUX_SELECT		(21U)
 
 #endif /* PLAT_PRIVATE_H */

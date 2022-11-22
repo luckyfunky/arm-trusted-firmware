@@ -1,14 +1,16 @@
 /*
  * Copyright (c) 2018, ARM Limited and Contributors. All rights reserved.
- * Copyright (c) 2021-2022, Xilinx, Inc. All rights reserved.
+ * Copyright (c) 2018-2022, Xilinx, Inc. All rights reserved.
+ * Copyright (C) 2022, Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include <platform_def.h>
-#include <plat_private.h>
-#include <plat/common/platform.h>
 #include <common/debug.h>
+#include <plat/common/platform.h>
+
+#include <plat_private.h>
+#include <platform_def.h>
 
 static const uint8_t plat_power_domain_tree_desc[] = {
 	/* Number of root nodes */

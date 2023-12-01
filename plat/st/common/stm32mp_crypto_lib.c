@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, STMicroelectronics - All Rights Reserved
+ * Copyright (c) 2022-2023, STMicroelectronics - All Rights Reserved
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -16,6 +16,7 @@
 #include <drivers/st/stm32_pka.h>
 #include <drivers/st/stm32_rng.h>
 #include <drivers/st/stm32_saes.h>
+#include <lib/utils.h>
 #include <lib/xlat_tables/xlat_tables_v2.h>
 #include <mbedtls/asn1.h>
 #include <mbedtls/md.h>
@@ -78,8 +79,8 @@ static void crypto_lib_init(void)
 	}
 }
 
-int get_plain_pk_from_asn1(void *pk_ptr, unsigned int pk_len, void **plain_pk,
-			   unsigned int *len, int *pk_alg)
+static int get_plain_pk_from_asn1(void *pk_ptr, unsigned int pk_len, void **plain_pk,
+				  size_t *len, int *pk_alg)
 {
 	int ret;
 	mbedtls_pk_context mbedtls_pk = {0};
@@ -166,10 +167,18 @@ uint32_t verify_signature(uint8_t *hash_in, uint8_t *pubkey_in,
 	return ret;
 }
 
-int plat_convert_pk(void *full_pk_ptr, unsigned int full_pk_len,
-		    void **hashed_pk_ptr, unsigned int *hashed_pk_len)
+static int crypto_convert_pk(void *full_pk_ptr, unsigned int full_pk_len,
+			     void **hashed_pk_ptr, unsigned int *hashed_pk_len)
 {
-	return get_plain_pk_from_asn1(full_pk_ptr, full_pk_len, hashed_pk_ptr, hashed_pk_len, NULL);
+	size_t len;
+	int ret;
+
+	ret = get_plain_pk_from_asn1(full_pk_ptr, full_pk_len, hashed_pk_ptr, &len, NULL);
+	if (ret == 0) {
+		*hashed_pk_len = (unsigned int)len;
+	}
+
+	return ret;
 }
 #else /* STM32MP_CRYPTO_ROM_LIB*/
 static uint32_t verify_signature(uint8_t *hash_in, uint8_t *pubkey_in,
@@ -219,13 +228,13 @@ static uint32_t verify_signature(uint8_t *hash_in, uint8_t *pubkey_in,
 	return 0;
 }
 
-int plat_convert_pk(void *full_pk_ptr, unsigned int full_pk_len,
-		    void **hashed_pk_ptr, unsigned int *hashed_pk_len)
+static int crypto_convert_pk(void *full_pk_ptr, unsigned int full_pk_len,
+			     void **hashed_pk_ptr, unsigned int *hashed_pk_len)
 {
 	static uint8_t st_pk[CRYPTO_PUBKEY_MAX_SIZE + sizeof(uint32_t)];
 	int ret;
 	void *plain_pk;
-	unsigned int len;
+	size_t len;
 	int curve_id;
 	uint32_t cid;
 
@@ -240,7 +249,7 @@ int plat_convert_pk(void *full_pk_ptr, unsigned int full_pk_len,
 	memcpy(st_pk + sizeof(cid), plain_pk, len);
 
 	*hashed_pk_ptr = st_pk;
-	*hashed_pk_len = len + sizeof(cid);
+	*hashed_pk_len = (unsigned int)(len + sizeof(cid));
 
 	return 0;
 }
@@ -338,15 +347,15 @@ static int crypto_verify_signature(void *data_ptr, unsigned int data_len,
 		return CRYPTO_ERR_SIGNATURE;
 	}
 
-	ret = get_plain_pk_from_asn1(pk_ptr, pk_len, &pk_ptr, &pk_len, &curve_id);
+	ret = get_plain_pk_from_asn1(pk_ptr, pk_len, &pk_ptr, &len, &curve_id);
 	if (ret != 0) {
 		VERBOSE("%s: get_plain_pk_from_asn1 (%d)\n", __func__, ret);
 		return CRYPTO_ERR_SIGNATURE;
 	}
 
 	/* We expect a known pk_len */
-	if (pk_len != sizeof(my_pk)) {
-		VERBOSE("%s: pk_len=%u sizeof(my_pk)=%zu)\n", __func__, pk_len, sizeof(my_pk));
+	if (len != sizeof(my_pk)) {
+		VERBOSE("%s: pk_len=%zu sizeof(my_pk)=%zu)\n", __func__, len, sizeof(my_pk));
 		return CRYPTO_ERR_SIGNATURE;
 	}
 
@@ -482,7 +491,7 @@ static int derive_key(uint8_t *key, size_t *key_len, size_t len,
 	/*
 	 * Not a real derivation yet
 	 *
-	 * But we expect a 32 bytes key, and OTP is only 16 bytes
+	 * We expect a 32 bytes key, if OTP is only 16 bytes
 	 *   => duplicate.
 	 */
 	for (i = 0U, j = len; j < 32U;
@@ -516,7 +525,7 @@ int plat_get_enc_key_info(enum fw_enc_status_t fw_enc_status, uint8_t *key,
 	}
 
 	if (otp_len > (*key_len * CHAR_BIT)) {
-		VERBOSE("%s: length Error otp_len=%u key_len=%u\n", __func__,
+		VERBOSE("%s: length Error otp_len=%u key_len=%zu\n", __func__,
 			otp_len, *key_len * CHAR_BIT);
 		return -EINVAL;
 	}
@@ -649,13 +658,16 @@ REGISTER_CRYPTO_LIB("stm32_crypto_lib",
 		    crypto_lib_init,
 		    crypto_verify_signature,
 		    crypto_verify_hash,
-		    crypto_auth_decrypt);
+		    NULL,
+		    crypto_auth_decrypt,
+		    crypto_convert_pk);
 
 #else /* No decryption support */
 REGISTER_CRYPTO_LIB("stm32_crypto_lib",
 		    crypto_lib_init,
 		    crypto_verify_signature,
 		    crypto_verify_hash,
-		    NULL);
-
+		    NULL,
+		    NULL,
+		    crypto_convert_pk);
 #endif

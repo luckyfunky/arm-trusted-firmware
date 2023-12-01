@@ -33,7 +33,7 @@ const mmap_region_t plat_versal_mmap[] = {
 	{ 0 }
 };
 
-const mmap_region_t *plat_versal_get_mmap(void)
+const mmap_region_t *plat_get_mmap(void)
 {
 	return plat_versal_mmap;
 }
@@ -72,4 +72,9 @@ void board_detection(void)
 
 	platform_id = FIELD_GET(PLATFORM_MASK, plat_info[1]);
 	platform_version = FIELD_GET(PLATFORM_VERSION_MASK, plat_info[1]);
+}
+
+uint32_t get_uart_clk(void)
+{
+	return UART_CLOCK;
 }

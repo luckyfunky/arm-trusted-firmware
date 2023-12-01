@@ -15,7 +15,7 @@
 #include <plat_ipi.h>
 
 /* Zynqmp ipi configuration table */
-const static struct ipi_config zynqmp_ipi_table[] = {
+static const struct ipi_config zynqmp_ipi_table[] = {
 	/* APU IPI */
 	{
 		.ipi_bit_mask = 0x1,

@@ -13,14 +13,14 @@
 #include <common/debug.h>
 #include <common/fdt_fixup.h>
 #include <common/fdt_wrappers.h>
-#include <drivers/arm/dcc.h>
-#include <drivers/console.h>
 #include <lib/mmio.h>
 #include <libfdt.h>
 #include <plat/arm/common/plat_arm.h>
 #include <plat/common/platform.h>
+#include <plat_console.h>
 
 #include <custom_svc.h>
+#include <plat_fdt.h>
 #include <plat_private.h>
 #include <plat_startup.h>
 #include <zynqmp_def.h>
@@ -73,24 +73,8 @@ void bl31_early_platform_setup2(u_register_t arg0, u_register_t arg1,
 {
 	uint64_t tfa_handoff_addr;
 
-	if (ZYNQMP_CONSOLE_IS(cadence) || (ZYNQMP_CONSOLE_IS(cadence1))) {
-		/* Register the console to provide early debug support */
-		static console_t bl31_boot_console;
-		(void)console_cdns_register(ZYNQMP_UART_BASE,
-					       zynqmp_get_uart_clk(),
-					       ZYNQMP_UART_BAUDRATE,
-					       &bl31_boot_console);
-		console_set_scope(&bl31_boot_console,
-				  CONSOLE_FLAG_RUNTIME | CONSOLE_FLAG_BOOT);
-	} else if (ZYNQMP_CONSOLE_IS(dcc)) {
-		/* Initialize the dcc console for debug */
-		int32_t rc = console_dcc_register();
-		if (rc == 0) {
-			panic();
-		}
-	} else {
-		ERROR("BL31: No console device found.\n");
-	}
+	setup_console();
+
 	/* Initialize the platform config for future decision making */
 	zynqmp_config_setup();
 
@@ -182,55 +166,9 @@ static uint64_t rdo_el3_interrupt_handler(uint32_t id, uint32_t flags,
 }
 #endif
 
-#if (defined(XILINX_OF_BOARD_DTB_ADDR) && !IS_TFA_IN_OCM(BL31_BASE))
-static void prepare_dtb(void)
-{
-	void *dtb = (void *)XILINX_OF_BOARD_DTB_ADDR;
-	int ret;
-
-	/* Return if no device tree is detected */
-	if (fdt_check_header(dtb) != 0) {
-		NOTICE("Can't read DT at %p\n", dtb);
-		return;
-	}
-
-	ret = fdt_open_into(dtb, dtb, XILINX_OF_BOARD_DTB_MAX_SIZE);
-	if (ret < 0) {
-		ERROR("Invalid Device Tree at %p: error %d\n", dtb, ret);
-		return;
-	}
-
-	if (dt_add_psci_node(dtb)) {
-		ERROR("Failed to add PSCI Device Tree node\n");
-		return;
-	}
-
-	if (dt_add_psci_cpu_enable_methods(dtb)) {
-		ERROR("Failed to add PSCI cpu enable methods in Device Tree\n");
-		return;
-	}
-
-	/* Reserve memory used by Trusted Firmware. */
-	if (fdt_add_reserved_memory(dtb, "tf-a", BL31_BASE,
-				   (size_t) (BL31_LIMIT - BL31_BASE))) {
-		WARN("Failed to add reserved memory nodes for BL31 to DT.\n");
-	}
-
-	ret = fdt_pack(dtb);
-	if (ret < 0) {
-		ERROR("Failed to pack Device Tree at %p: error %d\n", dtb, ret);
-	}
-
-	clean_dcache_range((uintptr_t)dtb, fdt_blob_size(dtb));
-	INFO("Changed device tree to advertise PSCI and reserved memories.\n");
-}
-#endif
-
 void bl31_platform_setup(void)
 {
-#if (defined(XILINX_OF_BOARD_DTB_ADDR) && !IS_TFA_IN_OCM(BL31_BASE))
 	prepare_dtb();
-#endif
 
 	/* Initialize the gic cpu and distributor interfaces */
 	plat_arm_gic_driver_init();
@@ -252,6 +190,8 @@ void bl31_plat_runtime_setup(void)
 #endif
 
 	custom_runtime_setup();
+
+	console_switch_state(CONSOLE_FLAG_RUNTIME);
 }
 
 /*
@@ -281,6 +221,6 @@ void bl31_plat_arch_setup(void)
 
 	custom_mmap_add();
 
-	setup_page_tables(bl_regions, plat_arm_get_mmap());
+	setup_page_tables(bl_regions, plat_get_mmap());
 	enable_mmu_el3(0);
 }

@@ -49,6 +49,14 @@ ifdef XILINX_OF_BOARD_DTB_ADDR
 $(eval $(call add_define,XILINX_OF_BOARD_DTB_ADDR))
 endif
 
+PLAT_XLAT_TABLES_DYNAMIC := 0
+ifeq (${PLAT_XLAT_TABLES_DYNAMIC},1)
+$(eval $(call add_define,PLAT_XLAT_TABLES_DYNAMIC))
+endif
+
+# enable assert() for release/debug builds
+ENABLE_ASSERTIONS := 1
+
 PLAT_INCLUDES		:=	-Iinclude/plat/arm/common/			\
 				-Iplat/xilinx/common/include/			\
 				-Iplat/xilinx/common/ipi_mailbox_service/	\
@@ -83,9 +91,11 @@ $(eval $(call add_define_val,VERSAL_CONSOLE,VERSAL_CONSOLE_ID_${VERSAL_CONSOLE})
 
 BL31_SOURCES		+=	drivers/arm/cci/cci.c				\
 				lib/cpus/aarch64/cortex_a72.S			\
+				common/fdt_wrappers.c                           \
 				plat/common/plat_psci_common.c			\
 				plat/xilinx/common/ipi.c			\
 				plat/xilinx/common/plat_fdt.c			\
+				plat/xilinx/common/plat_console.c               \
 				plat/xilinx/common/plat_startup.c		\
 				plat/xilinx/common/ipi_mailbox_service/ipi_mailbox_svc.c \
 				plat/xilinx/common/pm_service/pm_ipi.c		\

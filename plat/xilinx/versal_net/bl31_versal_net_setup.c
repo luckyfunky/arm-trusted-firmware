@@ -12,13 +12,11 @@
 #include <bl31/bl31.h>
 #include <common/bl_common.h>
 #include <common/debug.h>
-#include <drivers/arm/dcc.h>
-#include <drivers/arm/pl011.h>
-#include <drivers/console.h>
 #include <lib/mmio.h>
 #include <lib/xlat_tables/xlat_tables_v2.h>
 #include <plat/common/platform.h>
 #include <plat_arm.h>
+#include <plat_console.h>
 
 #include <plat_fdt.h>
 #include <plat_private.h>
@@ -69,8 +67,6 @@ static inline void bl31_set_default_config(void)
 void bl31_early_platform_setup2(u_register_t arg0, u_register_t arg1,
 				u_register_t arg2, u_register_t arg3)
 {
-	uint32_t uart_clock;
-	int32_t rc;
 #if !(TFA_NO_PM)
 	uint64_t tfa_handoff_addr, buff[HANDOFF_PARAMS_MAX_SIZE] = {0};
 	uint32_t payload[PAYLOAD_ARG_CNT], max_size = HANDOFF_PARAMS_MAX_SIZE;
@@ -82,47 +78,22 @@ void bl31_early_platform_setup2(u_register_t arg0, u_register_t arg1,
 	switch (platform_id) {
 	case VERSAL_NET_SPP:
 		cpu_clock = 1000000;
-		uart_clock = 1000000;
 		break;
 	case VERSAL_NET_EMU:
 		cpu_clock = 3660000;
-		uart_clock = 25000000;
 		break;
 	case VERSAL_NET_QEMU:
 		/* Random values now */
 		cpu_clock = 100000000;
-		uart_clock = 25000000;
 		break;
 	case VERSAL_NET_SILICON:
 		cpu_clock = 100000000;
-		uart_clock = 100000000;
 		break;
 	default:
 		panic();
 	}
 
-	if (VERSAL_NET_CONSOLE_IS(pl011_0) || VERSAL_NET_CONSOLE_IS(pl011_1)) {
-		static console_t versal_net_runtime_console;
-
-		/* Initialize the console to provide early debug support */
-		rc = console_pl011_register(VERSAL_NET_UART_BASE, uart_clock,
-				    VERSAL_NET_UART_BAUDRATE,
-				    &versal_net_runtime_console);
-		if (rc == 0) {
-			panic();
-		}
-
-		console_set_scope(&versal_net_runtime_console, CONSOLE_FLAG_BOOT |
-				CONSOLE_FLAG_RUNTIME);
-	} else if (VERSAL_NET_CONSOLE_IS(dcc)) {
-		/* Initialize the dcc console for debug.
-		 * dcc is over jtag and does not configures uart0 or uart1.
-		 */
-		rc = console_dcc_register();
-		if (rc == 0) {
-			panic();
-		}
-	}
+	setup_console();
 
 	NOTICE("TF-A running on %s %d.%d\n", board_name_decode(),
 	       platform_version / 10U, platform_version % 10U);
@@ -160,6 +131,19 @@ void bl31_early_platform_setup2(u_register_t arg0, u_register_t arg1,
 		}
 
 		INFO("BL31: PLM to TF-A handover success\n");
+
+		/*
+		 * The BL32 load address is indicated as 0x0 in the handoff
+		 * parameters, which is different from the default/user-provided
+		 * load address of 0x60000000 but the flags are correctly
+		 * configured. Consequently, in this scenario, set the PC
+		 * to the requested BL32_BASE address.
+		 */
+
+		/* TODO: Remove the following check once this is fixed from PLM */
+		if (bl32_image_ep_info.pc == 0 && bl32_image_ep_info.spsr != 0) {
+			bl32_image_ep_info.pc = (uintptr_t)BL32_BASE;
+		}
 	} else {
 		INFO("BL31: setting up default configs\n");
 
@@ -242,6 +226,8 @@ void bl31_plat_runtime_setup(void)
 	if (rc != 0) {
 		panic();
 	}
+
+	console_switch_state(CONSOLE_FLAG_RUNTIME);
 }
 
 /*
@@ -263,6 +249,6 @@ void bl31_plat_arch_setup(void)
 		{0}
 	};
 
-	setup_page_tables(bl_regions, plat_versal_net_get_mmap());
+	setup_page_tables(bl_regions, plat_get_mmap());
 	enable_mmu(0);
 }

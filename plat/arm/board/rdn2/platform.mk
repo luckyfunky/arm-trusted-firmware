@@ -1,13 +1,13 @@
-# Copyright (c) 2020-2022, Arm Limited and Contributors. All rights reserved.
+# Copyright (c) 2020-2023, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 #
 
-RD_N2_VARIANTS	:= 0 1 2
+RD_N2_VARIANTS	:= 0 1 2 3
 ifneq ($(CSS_SGI_PLATFORM_VARIANT),\
 	$(filter $(CSS_SGI_PLATFORM_VARIANT),$(RD_N2_VARIANTS)))
- $(error "CSS_SGI_PLATFORM_VARIANT for RD-N2 should be 0, 1 or 2, currently set \
-     to ${CSS_SGI_PLATFORM_VARIANT}.")
+ $(error "CSS_SGI_PLATFORM_VARIANT for RD-N2 should be 0, 1, 2 or 3, currently \
+	set to ${CSS_SGI_PLATFORM_VARIANT}.")
 endif
 
 $(eval $(call CREATE_SEQ,SEQ,4))
@@ -69,6 +69,13 @@ BL31_SOURCES	+=	drivers/arm/gic/v3/gic600_multichip.c
 BL31_CFLAGS		+=	-DPLAT_XLAT_TABLES_DYNAMIC
 endif
 
+ifeq (${ENABLE_FEAT_RAS}-${HANDLE_EA_EL3_FIRST_NS},1-1)
+BL31_SOURCES		+=	${RDN2_BASE}/rdn2_ras.c			\
+				${CSS_ENT_BASE}/ras/sgi_ras_common.c	\
+				${CSS_ENT_BASE}/ras/sgi_ras_sram.c	\
+				${CSS_ENT_BASE}/ras/sgi_ras_cpu.c
+endif
+
 # Add the FDT_SOURCES and options for Dynamic Config
 FDT_SOURCES		+=	${RDN2_BASE}/fdts/${PLAT}_fw_config.dts	\
 				${RDN2_BASE}/fdts/${PLAT}_tb_fw_config.dts
@@ -87,4 +94,4 @@ NT_FW_CONFIG		:=	${BUILD_PLAT}/fdts/${PLAT}_nt_fw_config.dtb
 $(eval $(call TOOL_ADD_PAYLOAD,${NT_FW_CONFIG},--nt-fw-config))
 
 override CTX_INCLUDE_AARCH32_REGS	:= 0
-override ENABLE_AMU			:= 1
+override ENABLE_FEAT_AMU		:= 1

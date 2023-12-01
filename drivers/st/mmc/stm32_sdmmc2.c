@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2022, STMicroelectronics - All Rights Reserved
+ * Copyright (c) 2018-2023, STMicroelectronics - All Rights Reserved
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -130,6 +130,12 @@
 #endif
 
 #define SDMMC_FIFO_SIZE			64U
+
+#define STM32MP_MMC_INIT_FREQ			U(400000)	/*400 KHz*/
+#define STM32MP_SD_NORMAL_SPEED_MAX_FREQ	U(25000000)	/*25 MHz*/
+#define STM32MP_SD_HIGH_SPEED_MAX_FREQ		U(50000000)	/*50 MHz*/
+#define STM32MP_EMMC_NORMAL_SPEED_MAX_FREQ	U(26000000)	/*26 MHz*/
+#define STM32MP_EMMC_HIGH_SPEED_MAX_FREQ	U(52000000)	/*52 MHz*/
 
 static void stm32_sdmmc2_init(void);
 static int stm32_sdmmc2_send_cmd_req(struct mmc_cmd *cmd);
@@ -528,12 +534,12 @@ static int stm32_sdmmc2_prepare(int lba, uintptr_t buf, size_t size)
 	uint32_t data_ctrl = SDMMC_DCTRLR_DTDIR;
 	uint32_t arg_size;
 
-	assert(size != 0U);
+	assert((size != 0U) && (size <= UINT32_MAX));
 
 	if (size > MMC_BLOCK_SIZE) {
 		arg_size = MMC_BLOCK_SIZE;
 	} else {
-		arg_size = size;
+		arg_size = (uint32_t)size;
 	}
 
 	sdmmc2_params.use_dma = plat_sdmmc2_use_dma(base, buf);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020, ARM Limited and Contributors. All rights reserved.
+ * Copyright (c) 2018-2023, ARM Limited and Contributors. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -11,7 +11,7 @@
 #include <drivers/console.h>
 
 console_t *console_list;
-uint8_t console_state = CONSOLE_FLAG_BOOT;
+static uint8_t console_state = CONSOLE_FLAG_BOOT;
 
 IMPORT_SYM(console_t *, __STACKS_START__, stacks_start)
 IMPORT_SYM(console_t *, __STACKS_END__, stacks_end)
@@ -108,6 +108,7 @@ int putchar(int c)
 		return EOF;
 }
 
+#if ENABLE_CONSOLE_GETC
 int console_getc(void)
 {
 	int err = ERROR_NO_VALID_CONSOLE;
@@ -127,6 +128,7 @@ int console_getc(void)
 
 	return err;
 }
+#endif
 
 void console_flush(void)
 {

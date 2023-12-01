@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2022, ARM Limited and Contributors. All rights reserved.
+ * Copyright (c) 2016-2023, Arm Limited and Contributors. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -20,7 +20,7 @@
 						SMCCC_VERSION_MINOR_SHIFT))
 
 #define SMCCC_MAJOR_VERSION U(1)
-#define SMCCC_MINOR_VERSION U(2)
+#define SMCCC_MINOR_VERSION U(4)
 
 /*******************************************************************************
  * Bit definitions inside the function id as per the SMC calling convention
@@ -37,9 +37,13 @@
 #define FUNCID_OEN_MASK			U(0x3f)
 #define FUNCID_OEN_WIDTH		U(6)
 
-#define FUNCID_SVE_HINT_SHIFT          U(16)
-#define FUNCID_SVE_HINT_MASK           U(1)
-#define FUNCID_SVE_HINT_WIDTH          U(1)
+#define FUNCID_FC_RESERVED_SHIFT	U(17)
+#define FUNCID_FC_RESERVED_MASK		U(0x7f)
+#define FUNCID_FC_RESERVED_WIDTH	U(7)
+
+#define FUNCID_SVE_HINT_SHIFT		U(16)
+#define FUNCID_SVE_HINT_MASK		U(1)
+#define FUNCID_SVE_HINT_WIDTH		U(1)
 
 #define FUNCID_NUM_SHIFT		U(0)
 #define FUNCID_NUM_MASK			U(0xffff)

@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2022, Arm Limited. All rights reserved.
+# Copyright (c) 2021-2023, Arm Limited. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 #
@@ -6,8 +6,12 @@
 include common/fdt_wrappers.mk
 
 ifeq ($(TARGET_PLATFORM), 0)
-$(warning Platform ${PLAT}$(TARGET_PLATFORM) is deprecated. \
-Some of the features might not work as expected)
+	$(error Platform ${PLAT}$(TARGET_PLATFORM) is deprecated.)
+endif
+
+ifeq ($(TARGET_PLATFORM), 1)
+        $(warning Platform ${PLAT}$(TARGET_PLATFORM) is deprecated. \
+          Some of the features might not work as expected)
 endif
 
 ifeq ($(shell expr $(TARGET_PLATFORM) \<= 2), 0)
@@ -20,7 +24,7 @@ CSS_LOAD_SCP_IMAGES	:=	1
 
 CSS_USE_SCMI_SDS_DRIVER	:=	1
 
-RAS_EXTENSION		:=	0
+ENABLE_FEAT_RAS		:=	1
 
 SDEI_SUPPORT		:=	0
 
@@ -41,7 +45,7 @@ GIC_ENABLE_V4_EXTN	:=      1
 GICV3_SUPPORT_GIC600	:=	1
 
 # Enable SVE
-ENABLE_SVE_FOR_NS	:=	1
+ENABLE_SVE_FOR_NS	:=	2
 ENABLE_SVE_FOR_SWD	:=	1
 
 # enable trace buffer control registers access to NS by default
@@ -68,13 +72,6 @@ TC_BASE	=	plat/arm/board/tc
 
 PLAT_INCLUDES		+=	-I${TC_BASE}/include/
 
-# CPU libraries for TARGET_PLATFORM=0
-ifeq (${TARGET_PLATFORM}, 0)
-TC_CPU_SOURCES	+=	lib/cpus/aarch64/cortex_a510.S	\
-			lib/cpus/aarch64/cortex_a710.S	\
-			lib/cpus/aarch64/cortex_x2.S
-endif
-
 # CPU libraries for TARGET_PLATFORM=1
 ifeq (${TARGET_PLATFORM}, 1)
 TC_CPU_SOURCES	+=	lib/cpus/aarch64/cortex_a510.S \
@@ -84,9 +81,9 @@ endif
 
 # CPU libraries for TARGET_PLATFORM=2
 ifeq (${TARGET_PLATFORM}, 2)
-TC_CPU_SOURCES	+=	lib/cpus/aarch64/cortex_hayes.S \
-			lib/cpus/aarch64/cortex_hunter.S \
-			lib/cpus/aarch64/cortex_hunter_elp_arm.S
+TC_CPU_SOURCES	+=	lib/cpus/aarch64/cortex_a520.S \
+			lib/cpus/aarch64/cortex_a720.S \
+			lib/cpus/aarch64/cortex_x4.S
 endif
 
 INTERCONNECT_SOURCES	:=	${TC_BASE}/tc_interconnect.c
@@ -118,7 +115,8 @@ BL31_SOURCES		+=	${INTERCONNECT_SOURCES}	\
 				lib/fconf/fconf_dyn_cfg_getter.c	\
 				drivers/cfi/v2m/v2m_flash.c		\
 				lib/utils/mem_region.c			\
-				plat/arm/common/arm_nor_psci_mem_protect.c
+				plat/arm/common/arm_nor_psci_mem_protect.c	\
+				drivers/arm/sbsa/sbsa.c
 
 BL31_SOURCES		+=	${FDT_WRAPPERS_SOURCES}
 
@@ -158,9 +156,9 @@ override CTX_INCLUDE_AARCH32_REGS	:= 0
 
 override CTX_INCLUDE_PAUTH_REGS	:= 1
 
-override ENABLE_SPE_FOR_LOWER_ELS	:= 0
+override ENABLE_SPE_FOR_NS	:= 0
 
-override ENABLE_AMU := 1
+override ENABLE_FEAT_AMU := 1
 override ENABLE_AMU_AUXILIARY_COUNTERS := 1
 override ENABLE_AMU_FCONF := 1
 
@@ -192,6 +190,15 @@ ifeq (${MEASURED_BOOT},1)
 PLAT_INCLUDES		+=	-Iinclude/lib/psa
 
 endif
+
+ifneq (${PLATFORM_TEST},)
+    # Add this include as first, before arm_common.mk. This is necessary
+    # because arm_common.mk builds Mbed TLS, and platform_test.mk can
+    # change the list of Mbed TLS files that are to be compiled
+    # (LIBMBEDTLS_SRCS).
+    include plat/arm/board/tc/platform_test.mk
+endif
+
 
 include plat/arm/common/arm_common.mk
 include plat/arm/css/common/css_common.mk

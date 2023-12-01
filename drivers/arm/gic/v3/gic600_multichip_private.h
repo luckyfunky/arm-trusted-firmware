@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, ARM Limited. All rights reserved.
+ * Copyright (c) 2019-2023, ARM Limited. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -39,7 +39,7 @@
 
 /* SPI interrupt id minimum and maximum range */
 #define GIC600_SPI_ID_MIN		32
-#define GIC600_SPI_ID_MAX		960
+#define GIC600_SPI_ID_MAX		991
 
 #define GIC700_SPI_ID_MIN		32
 #define GIC700_SPI_ID_MAX		991
@@ -48,9 +48,6 @@
 
 /* Number of retries for PUP update */
 #define GICD_PUP_UPDATE_RETRIES		10000
-
-#define SPI_MIN_INDEX			0
-#define SPI_MAX_INDEX			1
 
 #define SPI_BLOCK_MIN_VALUE(spi_id_min) \
 			(((spi_id_min) - GIC600_SPI_ID_MIN) / \

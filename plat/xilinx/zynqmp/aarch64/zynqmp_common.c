@@ -27,12 +27,17 @@
  * This doesn't include TZRAM as the 'mem_layout' argument passed to
  * configure_mmu_elx() will give the available subset of that,
  */
-const mmap_region_t plat_arm_mmap[] = {
+const mmap_region_t plat_zynqmp_mmap[] = {
 	{ DEVICE0_BASE, DEVICE0_BASE, DEVICE0_SIZE, MT_DEVICE | MT_RW | MT_SECURE },
 	{ DEVICE1_BASE, DEVICE1_BASE, DEVICE1_SIZE, MT_DEVICE | MT_RW | MT_SECURE },
 	{ CRF_APB_BASE, CRF_APB_BASE, CRF_APB_SIZE, MT_DEVICE | MT_RW | MT_SECURE },
 	{0}
 };
+
+const mmap_region_t *plat_get_mmap(void)
+{
+	return plat_zynqmp_mmap;
+}
 
 static uint32_t zynqmp_get_silicon_ver(void)
 {
@@ -48,7 +53,7 @@ static uint32_t zynqmp_get_silicon_ver(void)
 	return ver;
 }
 
-uint32_t zynqmp_get_uart_clk(void)
+uint32_t get_uart_clk(void)
 {
 	unsigned int ver = zynqmp_get_silicon_ver();
 
@@ -220,7 +225,7 @@ static const struct {
 #define ZYNQMP_PL_STATUS_MASK	BIT(ZYNQMP_PL_STATUS_BIT)
 #define ZYNQMP_CSU_VERSION_MASK	~(ZYNQMP_PL_STATUS_MASK)
 
-#define SILICON_ID_XCK24	0x4714093U
+#define SILICON_ID_XCK24	0x4712093U
 #define SILICON_ID_XCK26	0x4724093U
 
 static char *zynqmp_get_silicon_idcode_name(void)

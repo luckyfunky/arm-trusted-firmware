@@ -25,6 +25,18 @@ issues found, additional release candidates may be created to fix the issues.
          code freeze       ver w.x       code freeze     ver y.z
 
 
+Version numbering
+~~~~~~~~~~~~~~~~~
+TF-A version is given in Makefile, through several macros:
+
+- VERSION_MAJOR
+- VERSION_MINOR
+- VERSION_PATCH
+
+For example, TF-A v2.10 has VERSION_MAJOR=2, VERSION_MINOR=10 and VERSION_PATCH=0.
+
+This VERSION_PATCH macro is only increased for LTS releases.
+
 Upcoming Releases
 ~~~~~~~~~~~~~~~~~
 
@@ -52,7 +64,9 @@ depending on project requirement and partner feedback.
 +-----------------+---------------------------+------------------------------+
 | v2.8            | 5th week of Nov '22       | 3rd week of Nov '22          |
 +-----------------+---------------------------+------------------------------+
-| v2.9            | 1st week of May '23       | 3rd week of Apr '23          |
+| v2.9            | 4th week of May '23       | 2nd week of May '23          |
++-----------------+---------------------------+------------------------------+
+| v2.10           | 4th week of Nov '23       | 2nd week of Nov '23          |
 +-----------------+---------------------------+------------------------------+
 
 Removal of Deprecated Interfaces
@@ -67,12 +81,26 @@ after which it will be removed.
 |                                | Date        | after   |                                                         |
 |                                |             | Release |                                                         |
 +================================+=============+=========+=========================================================+
-| plat_convert_pk() function     |   Nov'22    | Next    | Platform conversion to manage specific PK hash          |
-|                                |             | release |                                                         |
-|                                |             | after   |                                                         |
-|                                |             | 2.8     |                                                         |
+| Mbedtls-2.x                    |     2.10    |   2.10  | Support for TF-A builds with Mbedtls-2.x will be removed|
++--------------------------------+-------------+---------+---------------------------------------------------------+
+| STM32MP15_OPTEE_RSV_SHM        |     2.10    |   3.0   | OP-TEE manages its own memory on STM32MP15              |
++--------------------------------+-------------+---------+---------------------------------------------------------+
+
+Removal of Deprecated Drivers
+-----------------------------
+
+As mentioned in the :ref:`Platform Ports Policy`, this is a live document
+cataloging all the deprecated drivers in TF-A project and the Release version
+after which it will be removed.
+
++--------------------------------+-------------+---------+---------------------------------------------------------+
+| Driver                         | Deprecation | Removed | Comments                                                |
+|                                | Date        | after   |                                                         |
+|                                |             | Release |                                                         |
++================================+=============+=========+=========================================================+
+| None at this time.             |             |         |                                                         |
 +--------------------------------+-------------+---------+---------------------------------------------------------+
 
 --------------
 
-*Copyright (c) 2018-2022, Arm Limited and Contributors. All rights reserved.*
+*Copyright (c) 2018-2023, Arm Limited and Contributors. All rights reserved.*

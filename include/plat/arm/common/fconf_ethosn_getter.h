@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022, Arm Limited. All rights reserved.
+ * Copyright (c) 2021-2023, Arm Limited. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -45,6 +45,7 @@ struct ethosn_core_t {
 
 struct ethosn_device_t {
 	bool has_reserved_memory;
+	uint64_t reserved_memory_addr;
 	uint32_t num_cores;
 	struct ethosn_core_t cores[ETHOSN_DEV_CORE_NUM_MAX];
 	uint32_t num_allocators;
@@ -55,8 +56,6 @@ struct ethosn_config_t {
 	uint32_t num_devices;
 	struct ethosn_device_t devices[ETHOSN_DEV_NUM_MAX];
 };
-
-int fconf_populate_arm_ethosn(uintptr_t config);
 
 extern struct ethosn_config_t ethosn_config;
 

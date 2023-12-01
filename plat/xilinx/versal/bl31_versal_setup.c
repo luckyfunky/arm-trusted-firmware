@@ -12,13 +12,11 @@
 #include <bl31/bl31.h>
 #include <common/bl_common.h>
 #include <common/debug.h>
-#include <drivers/arm/dcc.h>
-#include <drivers/arm/pl011.h>
-#include <drivers/console.h>
 #include <lib/mmio.h>
 #include <lib/xlat_tables/xlat_tables_v2.h>
 #include <plat/common/platform.h>
 #include <plat_arm.h>
+#include <plat_console.h>
 
 #include <plat_fdt.h>
 #include <plat_private.h>
@@ -74,28 +72,7 @@ void bl31_early_platform_setup2(u_register_t arg0, u_register_t arg1,
 	enum pm_ret_status ret_status;
 	uint64_t addr[HANDOFF_PARAMS_MAX_SIZE];
 
-	if (VERSAL_CONSOLE_IS(pl011) || (VERSAL_CONSOLE_IS(pl011_1))) {
-		static console_t versal_runtime_console;
-		/* Initialize the console to provide early debug support */
-		int32_t rc = console_pl011_register((uintptr_t)VERSAL_UART_BASE,
-						(uint32_t)VERSAL_UART_CLOCK,
-						(uint32_t)VERSAL_UART_BAUDRATE,
-						&versal_runtime_console);
-		if (rc == 0) {
-			panic();
-		}
-
-		console_set_scope(&versal_runtime_console, (uint32_t)(CONSOLE_FLAG_BOOT |
-				  CONSOLE_FLAG_RUNTIME));
-	} else if (VERSAL_CONSOLE_IS(dcc)) {
-		/* Initialize the dcc console for debug */
-		int32_t rc = console_dcc_register();
-		if (rc == 0) {
-			panic();
-		}
-	} else {
-		NOTICE("BL31: Did not register for any console.\n");
-	}
+	setup_console();
 
 	/* Initialize the platform config for future decision making */
 	versal_config_setup();
@@ -138,6 +115,19 @@ void bl31_early_platform_setup2(u_register_t arg0, u_register_t arg1,
 		panic();
 	} else {
 		INFO("BL31: PLM to TF-A handover success %u\n", ret);
+
+		/*
+		 * The BL32 load address is indicated as 0x0 in the handoff
+		 * parameters, which is different from the default/user-provided
+		 * load address of 0x60000000 but the flags are correctly
+		 * configured. Consequently, in this scenario, set the PC
+		 * to the requested BL32_BASE address.
+		 */
+
+		/* TODO: Remove the following check once this is fixed from PLM */
+		if (bl32_image_ep_info.pc == 0 && bl32_image_ep_info.spsr != 0) {
+			bl32_image_ep_info.pc = (uintptr_t)BL32_BASE;
+		}
 	}
 
 	NOTICE("BL31: Secure code at 0x%lx\n", bl32_image_ep_info.pc);
@@ -213,6 +203,8 @@ void bl31_plat_runtime_setup(void)
 	if (rc != 0) {
 		panic();
 	}
+
+	console_switch_state(CONSOLE_FLAG_RUNTIME);
 }
 
 /*
@@ -224,7 +216,8 @@ void bl31_plat_arch_setup(void)
 	plat_arm_interconnect_enter_coherency();
 
 	const mmap_region_t bl_regions[] = {
-#if (defined(XILINX_OF_BOARD_DTB_ADDR) && !IS_TFA_IN_OCM(BL31_BASE))
+#if (defined(XILINX_OF_BOARD_DTB_ADDR) && !IS_TFA_IN_OCM(BL31_BASE) && \
+	(!defined(PLAT_XLAT_TABLES_DYNAMIC)))
 		MAP_REGION_FLAT(XILINX_OF_BOARD_DTB_ADDR, XILINX_OF_BOARD_DTB_MAX_SIZE,
 				MT_MEMORY | MT_RW | MT_NS),
 #endif
@@ -240,6 +233,6 @@ void bl31_plat_arch_setup(void)
 		{0}
 	};
 
-	setup_page_tables(bl_regions, plat_versal_get_mmap());
+	setup_page_tables(bl_regions, plat_get_mmap());
 	enable_mmu(0);
 }

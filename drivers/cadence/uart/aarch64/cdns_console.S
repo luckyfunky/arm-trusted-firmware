@@ -197,6 +197,11 @@ func console_cdns_core_flush
 	cmp	x0, #0
 	ASM_ASSERT(ne)
 #endif /* ENABLE_ASSERTIONS */
+	/* Check if tx is enabled */
+check_tx_enabled:
+	ldr     w2, [x0, #R_UART_CR]
+	tbnz    w2, #R_UART_CR_TX_EN, check_txfifo_empty
+	ret
 	/* Loop until the transmit FIFO is empty */
 check_txfifo_empty:
 	ldr     w2, [x0, #R_UART_SR]
